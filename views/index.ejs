@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Battleship</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
+  </head>
+  <body>
+  	<div >
+  		<div id="waiting" class="alert hidden">
+  			<h2 class="title">Waiting for other player to complete...</h2>
+  		</div>
+  		<div id="player-turn" class="alert hidden">
+  			<h2 class="title">player  turn</h2>
+  		</div>
+	  	<div id="left">
+	      	<div class="container" style="float: right">
+	        	<h1 id="p1" style="position: absolute; right: 0">Player 1</h1>
+	        	<div id="player1-board" class="board">
+	          <!-- Board -->
+        		</div>
+		        <div class="ship-container">
+		          	<div style="display: inline-block; width: 100%; float: none;">
+		            	<div class="ship-placeholder"><div id="shipNo1" class="ship ship2"></div></div>
+		            	<div class="ship-placeholder"><div id="shipNo2" class="ship ship3"></div></div>
+		            	<div class="ship-placeholder"><div id="shipNo3" class="ship ship3"></div></div>
+		            	<div class="ship-placeholder"><div id="shipNo4" class="ship ship4"></div></div>
+		            	<div class="ship-placeholder"><div id="shipNo5" class="ship ship5"></div></div>
+		          	</div>
+		          	<button id="Ready_button" class="hidden">Ready</button>
+		          	<div class="score">
+		            	<span id="shots">Shots: &nbsp; 0</span>
+		            	<span id="hits">Hits: &nbsp;&nbsp;&nbsp;&nbsp; 0</span>
+		          	</div>
+	        	</div>
+	      	</div>
+	    </div>
+	    <div id="right">
+	      	<div class="container" style="float: left">
+	        	<h1 id="p2" style="position: absolute">Player 2</h1>
+	        	<button id="reset">Reset</button>
+	        	<div id="player2-board" class="board">
+	          	<!-- Board -->
+	        	</div>
+	        	<div class="ship-container">
+	          		<div class="score">
+	            		<span id="shots">Shots: &nbsp; 0</span>
+	            		<span id="hits">Hits: &nbsp;&nbsp;&nbsp;&nbsp; 0</span>
+	          		</div>
+	        	</div>
+	      	</div>
+	    </div>
+	    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+	    <script src="script.js"></script>
+  	</div>
+    
+  </body>
+</html>

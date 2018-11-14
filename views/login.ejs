@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+<head>
+<title>CSS Template</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="/socket.io/socket.io.js"></script>
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Style the header */
+header {
+    background-color: none;
+    padding: 30px;
+    text-align: center;
+    font-size: 35px;
+    color: white;
+}
+
+/* Create two columns/boxes that floats next to each other */
+.form_login {
+    float: left;
+    width: 60%;
+    height: 200px; /* only for demonstration, should be removed */
+    background: none;
+    padding: 20px;
+}
+.form_select_remote {
+    float: left;
+    padding: 20px;
+    width: 40%;
+    background-color: #f1f1f1;
+    height: 200px; /* only for demonstration, should be removed */
+}
+
+/* Responsive layout - makes the two columns/boxes stack on top of each other instead of next to each other, on small screens */
+@media (max-width: 500px) {
+    nav, article {
+        width: 100%;
+        height: auto;
+    }
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+.switch input { 
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: #2196F3;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(26px);
+  -ms-transform: translateX(26px);
+  transform: translateX(26px);
+}
+
+/* Rounded sliders */
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
+.color
+{
+	background-color : grey;
+}
+.active{
+	background-color : black;
+}
+
+.backgr {
+    /* The image used */
+    background-image: url("login.jpg");
+
+    /* Full height */
+    height: 100%; 
+
+    /* Center and scale the image nicely */
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+</style>
+</head>
+<body class = "backgr">
+	<nav class="navbar navbar-inverse" id="fatherID" >
+		<a class="navbar-brand" href="./index">Battle Ship</a>
+			<ul class="nav navbar-nav">
+				<li class = "color">
+					<a href="./index">Game Play</a>
+				</li>
+				<li class="color active">
+					<a href="./login">Logout</a>
+				</li>
+				<li class="color">
+					<a href="./selectRemote">Select Remote</a>
+				</li>
+			</ul>
+		</nav>
+	</nav>
+<header>
+
+   <form class = "form_login" action="./index">
+        User name:
+            <br>
+                <input type="text" name="username" value="User Name">
+            <br>
+        Password:
+            <br>
+                <input type="text" name="password" value="Password">
+            <br>
+            <input type="submit" value="Submit">
+    </form> 
+	  
+<script>
+        var socket = io("http://localhost:3000");
+        var father = document.getElementById("fatherID");
+        var li_element= father.getElementsByClassName("color");
+        for (var i = 0; i < li_element.length; i++) {
+            li_element[i].addEventListener("click", function() {
+            var current = father.getElementsByClassName(" active");
+            current[0].className = current[0].className.replace(" active", "");
+            this.className =this.className + " active";
+            });
+        }
+        </script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+</body>
+</html>
