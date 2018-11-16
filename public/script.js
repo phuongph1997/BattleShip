@@ -9,9 +9,10 @@ var movedShip = null;
 var shipType = null;
 var player = null;
 
-const states = {PLACESHIP:0, ROTATE:1, READY:4, PLAYERTURN:2, OPPONENTTURN:3, ENDGAME:5};
+const states = {PLACESHIP:0, ROTATE:1, READY:4, WAITFORTURN:6, PLAYERTURN:2, OPPONENTTURN:3, ENDGAME:5};
 const command = {UP:'w', DOWN:'s', LEFT:'a', RIGHT:'d', OK:'f', CANCLE:'g'};
 const ships = [2, 3, 3, 4, 5];
+const TIMER_INTERVAL = 10
 var index = 0;
 var state = null;
 var selectedPoint = null;
@@ -19,10 +20,12 @@ var shipLength = null;
 var direction = null;
 var opponent_done = true;
 var turn = false;
+var time = 0;
+var timer ;
 
 // handle socket event
-//var socket = io.connect("18.136.212.75:3000")
-var socket = io.connect("localhost:3000")
+var socket = io.connect("18.136.212.75:3000")
+//var socket = io.connect("localhost:3000")
 
 // socket event on move
 socket.on("Server_Command" ,function(data){
@@ -35,10 +38,18 @@ socket.on("Server_Opponent_Done", function(data){
   opponent_done = true;
 
   if (!$('#waiting').hasClass('hidden')){
-    state = states.PLAYERTURN
-    $('#waiting').addClass('hidden')
+    GameBeginInit();
   }
 });
+
+// socket event on Select play turn which send by server
+socket.on("Server_SelectPlayTurn", function(data){
+  Switch_Turn(data)
+})
+
+socket.on("Server_SwitchRole", function(data){
+  Switch_Turn()
+})
 
 // socket event request from server if that location have ship or not
 socket.on("Server_WereShot", function(data){
@@ -55,7 +66,7 @@ socket.on("Server_WereShot", function(data){
     $(PlayerID).addClass('hit')
     $('#right #hits').html("Hits: &nbsp;&nbsp;&nbsp;&nbsp; " + $('#left .bomb.hit').length);
   } else {
-    state = states.PLAYERTURN
+    //Switch_Turn()
   }
 
   // check if you win the game
@@ -76,10 +87,11 @@ socket.on("Server_Shot_Result", function(data){
   if (data){
     $(CurrentID).addClass('hit');
     $('#left #hits').html("Hits: &nbsp;&nbsp;&nbsp;&nbsp; " + $('#right .bomb.hit').length);
+    Timer_Off()
+    Timer_On(1)
   }
   else 
-    state = states.OPPONENTTURN
-
+    Switch_Turn()
   // check if you win the game
   if ( $('#right .bomb.hit').length == ships.reduce(getSum)){
     state = states.ENDGAME
@@ -103,6 +115,17 @@ function PlaceShipDone(){
 
 function getSum(total, num) {
     return total + num;
+}
+
+function Switch_Turn(turn = 0){
+  Timer_Off()
+  if ((state == states.PLAYERTURN) | ((state == states.WAITFORTURN) & turn == 0)){
+    state = states.OPPONENTTURN
+    Timer_On(2)
+  } else if ( (state == states.OPPONENTTURN) | ((state == states.WAITFORTURN) & turn == 1)){
+    state = states.PLAYERTURN
+    Timer_On(1)
+  } 
 }
 
 
@@ -218,15 +241,6 @@ $(function() {
       playerTurn = 1;
     }
   });
-
-
-  /**
-   * Reload the page
-   */
-   $('#reset').click(function() {
-      location.reload();
-   });
-
 
   /**
    * Shoot ship
@@ -376,8 +390,8 @@ function Process(key){
         if (!opponent_done)
           $('#waiting').removeClass('hidden')
         else
-          state = states.PLAYERTURN
-        GameBeginInit();
+          GameBeginInit();
+        
       }
       break;
     case states.PLAYERTURN:
@@ -633,5 +647,51 @@ function CheckPlacement(direct){
 }
   
 function GameBeginInit(){
+  state = states.WAITFORTURN
+  $('#waiting').addClass('hidden')
   selectedPoint = 11;
+}
+
+function Timer1(){
+  $('#timer1').removeClass('hidden')
+  $('#timer1').html(time)
+  if (time == -1){
+    Timer_Off()
+    socket.emit("Client_Time_Out")
+  } else 
+    time = time - 1
+}
+
+function Timer2(){
+  $('#timer2').removeClass('hidden')
+  $('#timer2').html(time)
+  if (time == -1){
+    Timer_Off()
+    socket.emit("Client_Time_Out")
+  } else 
+    time = time - 1
+}
+
+function Timer_On(index){
+  time = TIMER_INTERVAL
+  if (index == 1){
+    //$('#timer1').removeClass('hidden')
+    Timer1()
+    timer = setInterval(Timer1,1000)
+  }
+  else if (index == 2){
+    //$('#timer2').removeClass('hidden')
+    Timer2()
+    timer = setInterval(Timer2,1000)
+  }
+}
+
+function Timer_Off(){
+  $('#timer1').addClass('hidden')
+  $('#timer2').addClass('hidden')
+  clearInterval(timer);
+}
+
+function Timer_Reset(){
+  time = TIMER_INTERVAL
 }
