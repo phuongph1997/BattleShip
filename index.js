@@ -10,12 +10,11 @@ var io = require("socket.io")(server);
 var sessionMiddleware = session({
   secret: "keyboard cat"
 });
+app.use(sessionMiddleware);
+app.use(cookieParser());
 io.use(function (socket, next) {
   sessionMiddleware(socket.request, socket.request.res, next);
 });
-app.use(sessionMiddleware);
-app.use(cookieParser());
-
 
 
 
@@ -32,10 +31,10 @@ var db = mysql.createConnection({
 db.connect(function(err) {
   if (err) throw err;
   console.log("mysql Connected!");
-  //con.query("CREATE DATABASE users");
+  //db.query("CREATE DATABASE users");
   //var sql = "CREATE TABLE users (Username VARCHAR(255), Password VARCHAR(255))";
-  //  //var sql = "INSERT INTO customers (name) VALUES ('Company Inc', 'Highway 37')";
-  // con.query(sql, function (err, result) {
+  // var sql = "INSERT INTO users (Username,Password) VALUES ('admin', 'admin')";
+  // db.query(sql, function (err, result) {
   //   if (err) throw err;
   //   console.log("table created");
   // });
@@ -74,51 +73,61 @@ io.on("connection",function(socket){
   }
 
   console.log("co nguoi ket noi "+ socket.id);
+
+  socket.on("Sign_Up", function(data)
+  {
+    user= data.username;
+    pass = data.password;
+
+    db.query("SELECT * FROM users WHERE Username=?", [user], function(err, rows, fields){
+      if(rows.length == 0){
+          console.log("Success!");
+        db.query("INSERT INTO users(`Username`, `Password`) VALUES(?, ?)", [user, pass], function(err, result){
+          if(!!err)
+          throw err;
+          console.log(result);
+          socket.emit("Sign_Up_Successfully");
+          //
+        });
+      }
+      else{
+        socket.emit("Sign_Up_fail");
+      }
+  });
+  });
   socket.on("Client_Login", function(data){
     user = data.user,
     pass = data.pass;
     console.log(user + ':' + pass +':');
     if( !user || !pass){
       socket.emit("Server_Login_Fail");
-      console.log("loi");
     }
     else {
       console.log("da chay vo dong 69");
       db.query("SELECT * FROM users WHERE Username=?", [user], function(err, rows, fields){
         if(rows.length == 0){
 
-            db.query("INSERT INTO users(`Username`, `Password`) VALUES(?, ?)", [user, pass], function(err, result){
-              if(!!err)
-              throw err;
-              console.log(result);
-              socket.emit("Server_Login_Sucess");
-            });
-
+          socket.emit("Server_Login_Fail");
         }
         else{
           const dataUser = rows[0].Username,  dataPass = rows[0].Password;
             if(user == dataUser && pass == dataPass){
               socket.emit("Server_Login_Sucess");
-              console.log("login thanh cong");
               req.session.user_Name = rows[0].Username;
               req.session.save();
-              console.log(rows[0].Username);
-              console.log("test dong 100:"+req.session.user_Name+":" );
+              socket.emit("Sever_Gamepad_Status",{"status1":check_game_pad_1,"status2":check_game_pad_2});
+                console.log("status1:" + check_game_pad_1 + "status2:" + check_game_pad_2);
             }else{
               socket.emit("Server_Login_Fail");
               console.log("tai khoan pass sai");
             }
-
         }
-
       });
     }
     if(req.session.user_Name != null){
       console.log("test dong 110:"+req.session.user_Name+":" );
     }
   });
-
-
 
   socket.on("Gamepad_Connect",function(){
     //console.log(socket.adapter.rooms);
@@ -149,63 +158,17 @@ io.on("connection",function(socket){
       }
     });
 
-    //console.log(socket.adapter.rooms);
-    //console.log("test bien  "+ check_game_pad_1 + "bien 2" + check_game_pad_2);
   });
   socket.on("Gamepad_Command",function(data){
-    io.sockets.in(socket.Phong).emit("Server_Command",data);
+    io.sockets.in(socket.Phong).emit("Server_Commands",data);
     console.log("nut bam : "+ data);
   });
 
-
-  socket.on("Client_Login",function(data){
-    var sql = 'SELECT * FROM customers WHERE name = ' + mysql.escape(data);
-    con.query(sql, function (err, result) {
-      if (err) throw err;
-      if(result== null)
-      {
-        console.log("ten nguoi choi hop le");
-        socket.emit("Server_Login_Sucess");
-        con.query('INSERT INTO customers (name) VALUES (?)', data);
-      }
-      else {
-        console.log("ten nguoi choi da ton tai");
-        socket.emit("Server_Login_Fail");
-      }
-    });
-  });
-  socket.on("Client_Gamepad_Status",function(){
-    io.sockets.emit("Sever_Gamepad_Status",{status1:check_game_pad_1,status2:check_game_pad_2});
-  });
-  //con.query('INSERT INTO customers (name) VALUES (?)', data); // chay dc
-  //var sql = "INSERT INTO customers (name) VALUES (?)";
-  //con.query(sql,data, function (err, result) {
-  //if (err) throw err;
-
-
-  // con.query(sql, function (err, result) {
-  //   if (err) throw err;
-  //   console.log("table created");
-  // });
-  // con.query("SELECT * FROM customers", function (err, result, fields) {
-  //   if (err) throw err;
-  //   console.log(result);
-  // });
-  //
-  // 	var  mang=[];
-  // 	for(r in socket.adapter.rooms){
-  // 		mang.push(r);
-  // 	}
-  // 	io.sockets.emit("server-send-rooms",mang);
-  //
-  // 	//socket.emit("server-send-room-socket",data)
-  //
-  //
-  //
-  // socket.on("client-send-chat",function(data){
-  // 	io.sockets.in(socket.Phong).emit("server-send-Message",data);
-  // });
+  socket.on("Client_Select_Gamepad",function(data){
+    socket.Phong=data;
+  })
 });
+
 app.get("/", function(req, res){
   res.render("login");
 });
@@ -214,6 +177,14 @@ app.get("/index", function(req, res){
   res.render("index");
 });
 
+app.get("/login", function(req, res){
+  res.render("login");
+});
+
 app.get("/selectRemote", function(req, res){
   res.render("selectRemote");
+});
+
+app.get("/register", function(req, res){
+  res.render("register");
 });
