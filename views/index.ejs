@@ -4,16 +4,28 @@
     <meta charset="utf-8">
     <title>Battleship</title>
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
   </head>
   <body>
   	<div >
-  		<div id="waiting" class="alert hidden">
-  			<h2 class="title">Waiting for other player to complete...</h2>
+  		<div id="waiting" class="alert hidden transparency">
+  			<h2 class="title">Waiting for other player to finish...</h2>
   		</div>
+
   		<div id="player-turn" class="alert hidden">
-  			<h2 class="title">player  turn</h2>
+  			<h2 class="title">player turn</h2>
   		</div>
+
+  		<div id="win" class="alert hidden transparency">
+  			<h2 class="title">YOU WIN</h2>
+  		</div>
+
+  		<div id="lose" class="alert hidden transparency">
+  			<h2 class="title">YOU LOSE</h2>
+  		</div>
+
+  		<h1 style="text-align: center">BATTLE SHIP</h1>
+
 	  	<div id="left">
 	      	<div class="container" style="float: right">
 	        	<h1 id="p1" style="position: absolute; right: 0">Player 1</h1>

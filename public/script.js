@@ -5,12 +5,11 @@ var BOARD_SIZE = 9;
 var player1array = new Array(BOARD_SIZE + 1);
 var player2array = new Array(BOARD_SIZE + 1);
 var playerTurn = null;
-var turn = 0;
 var movedShip = null;
 var shipType = null;
 var player = null;
 
-const states = {PLACESHIP:0, ROTATE:1, READY:4, PLAYERTURN:2, OPPONENTTURN:3};
+const states = {PLACESHIP:0, ROTATE:1, READY:4, PLAYERTURN:2, OPPONENTTURN:3, ENDGAME:5};
 const command = {UP:'w', DOWN:'s', LEFT:'a', RIGHT:'d', OK:'f', CANCLE:'g'};
 const ships = [2, 3, 3, 4, 5];
 var index = 0;
@@ -18,26 +17,95 @@ var state = null;
 var selectedPoint = null;
 var shipLength = null;
 var direction = null;
-var opponent_done = false;
+var opponent_done = true;
+var turn = false;
 
 // handle socket event
-// var socket = io("18.136.212.75:3000");
+//var socket = io.connect("18.136.212.75:3000")
+var socket = io.connect("localhost:3000")
 
-// socket event move
-
-// socket event emit Client_PlaceShip_Done
+// socket event on move
+socket.on("Server_Command" ,function(data){
+  Process(data);
+});
 
 // socket event on Server_Opponent_Done
+socket.on("Server_Opponent_Done", function(data){
+  console.log("Server_Opponent_Done receive")
+  opponent_done = true;
 
-// socket event emit Client_Shot
+  if (!$('#waiting').hasClass('hidden')){
+    state = states.PLAYERTURN
+    $('#waiting').addClass('hidden')
+  }
+});
 
-// socket event on Server_WereShot
+// socket event request from server if that location have ship or not
+socket.on("Server_WereShot", function(data){
+  console.log("Server_WereShot : " + data.row + " " + data.column)
+  row  = data.row;
+  column = data.column;
+  // socket event emit Client_Shot_Result
+  socket.emit("Client_Shot_Result", player1array[row][column] )
 
-// socket event emit Client_Shot_Result
+  let PlayerID = '#'+selectedPoint+'-1'
+  $(PlayerID).addClass('bomb')
+  $('#right #shots').html("Shots: &nbsp; " + $('#left .bomb').length);
+  if (player1array[row][column]){
+    $(PlayerID).addClass('hit')
+    $('#right #hits').html("Hits: &nbsp;&nbsp;&nbsp;&nbsp; " + $('#left .bomb.hit').length);
+  } else {
+    state = states.PLAYERTURN
+  }
 
-// socket event on Server_Shot
+  // check if you win the game
+  if ( $('#left .bomb.hit').length == ships.reduce(getSum)){
+    state = states.ENDGAME
+    $("#lose").removeClass('hidden')
+  }
+});
 
-// socket event
+// socket event receive shot result
+socket.on("Server_Shot_Result", function(data){
+  let CurrentID = '#'+selectedPoint+'-2';
+  $(CurrentID).addClass('bomb');
+
+  console.log("Server_Shot_Result " + data)
+
+  $('#left #shots').html("Shots: &nbsp; " + $('#right .bomb').length);
+  if (data){
+    $(CurrentID).addClass('hit');
+    $('#left #hits').html("Hits: &nbsp;&nbsp;&nbsp;&nbsp; " + $('#right .bomb.hit').length);
+  }
+  else 
+    state = states.OPPONENTTURN
+
+  // check if you win the game
+  if ( $('#right .bomb.hit').length == ships.reduce(getSum)){
+    state = states.ENDGAME
+    $("#win").removeClass('hidden')
+  }
+});
+
+function Shoot(){
+  // socket event emit Client_Shot
+  let X = parseInt(selectedPoint%10);
+  let Y = parseInt(selectedPoint/10);
+  let CurrentID = '#'+selectedPoint+'-2';
+  if (!$(CurrentID).hasClass('bomb'))
+    socket.emit("Client_Shot", {row:Y,column:X})  
+}
+
+function PlaceShipDone(){
+  // socket event emit Client_PlaceShip_Done
+  socket.emit("Client_PlaceShip_Done")
+}
+
+function getSum(total, num) {
+    return total + num;
+}
+
+
 
 $(function() {
 
@@ -283,7 +351,7 @@ function PickShip(shipType){
     $('.board > div').not('.ship').addClass('opacity');
 }
 
-function Process(key ){
+function Process(key){
   //in the board field
   console.log('selected rectangle: ' + '#'+selectedPoint+'-1');
   console.log('state: ' + state);
@@ -292,28 +360,40 @@ function Process(key ){
   switch (state)
   {
     case states.PLACESHIP:
-      PlaceShip (key);
+      MoveCursor (key, 1);
       break;
 
     case states.ROTATE:
       Rotate (key);
       break;
     case states.READY:
-      if (key == command.OK);
+      if (key == command.OK){
+        PlaceShipDone();
         storeShips(1)
         console.log('status : ready')
+        $("#Ready_button").addClass('hidden')
+        $('.score').show();
         if (!opponent_done)
           $('#waiting').removeClass('hidden')
-        // Do press button
+        else
+          state = states.PLAYERTURN
+        GameBeginInit();
+      }
+      break;
     case states.PLAYERTURN:
+      MoveCursor (key, 2)
+      break;
+
     case states.OPPONENTTURN:
+      MoveCursor (key, 2)
+      break;
     default:
       break;
   }
   // in ship container field
 }
 
-function PlaceShip (key){
+function MoveCursor (key, player){
 
   // get previous position
   let X = parseInt(selectedPoint%10);
@@ -350,46 +430,49 @@ function PlaceShip (key){
 
     //OK
     case command.OK:
-      if (CheckPlacement(command.RIGHT) || CheckPlacement(command.LEFT) 
+      if (state == states.PLACESHIP){
+        if (CheckPlacement(command.RIGHT) || CheckPlacement(command.LEFT) 
           || CheckPlacement(command.DOWN) || CheckPlacement(command.UP)) {
-        state = states.ROTATE;
-        return;
+          state = states.ROTATE;
+        }  
+      } 
+      else if (state == states.PLAYERTURN){
+        Shoot();
       }
-      break;
+      
+      return;
     default:
       break;
   }
   // store value back to selectedPoint
   oldSelectedPoint = selectedPoint;
   selectedPoint = Y * 10 + X;
-  let PreviousID = '#'+oldSelectedPoint+'-1';
-  let CurrentID = '#'+selectedPoint+'-1';
+  let PreviousID = '#'+oldSelectedPoint+'-' + player;
+  let CurrentID = '#'+selectedPoint+'-' + player;
 
-  $(CurrentID).addClass('selected');
-  if (CheckPlacement(direction)){
-    $(CurrentID).addClass('place-ship');
-    switch (direction){
-      case command.UP:
-        $(CurrentID).addClass('vertical up');
-        break;
-      case command.LEFT:
-        $(CurrentID).addClass('left');
-        break;
-      case command.DOWN:
-        $(CurrentID).addClass('vertical');
-        break;
-      default:
-        break;
-    }
-  } else {
-    //selectedPoint = oldSelectedPoint;
+  if (state == states.PLACESHIP){
+    if (CheckPlacement(direction)){
+      $(CurrentID).addClass('place-ship');
+      switch (direction){
+        case command.UP:
+          $(CurrentID).addClass('vertical up');
+          break;
+        case command.LEFT:
+          $(CurrentID).addClass('left');
+          break;
+        case command.DOWN:
+          $(CurrentID).addClass('vertical');
+          break;
+        default:
+          break;
+      }
+    } 
+    // remove old selected rectangle
+    $(PreviousID).not('.ship').removeClass('vertical up left'); 
+    $(PreviousID).removeClass('place-ship');  
   }
-  // remove old selected rectangle
-  $(PreviousID).not('.ship').removeClass('vertical up left'); 
-  $(PreviousID).removeClass('place-ship');
+  $(CurrentID).addClass('selected');
   $(PreviousID).removeClass('selected');
-
-  
 }
 
 function Rotate (key){
@@ -438,60 +521,64 @@ function Rotate (key){
 
       //OK
       case command.OK:
-        state = states.PLACESHIP;
-        // Remove ship from picking area
-        $('#shipNo' + (index + 1)).css('display', 'none');
-        // Remove opcatity
-        $(CurrentID).removeClass('opacity');
-        $(CurrentID).addClass('ship');
-        $('.board > div').not('.ship').removeClass();
-        switch (direction){
-          case command.UP:
-            for (var i = 1; i < shipLength; i++) {
-              $('#' + (Y - i) + X + "-1").addClass('ship');
-            }
-            break;
+        if (CheckPlacement(direction)){
+          state = states.PLACESHIP;
+          // Remove ship from picking area
+          $('#shipNo' + (index + 1)).css('display', 'none');
+          // Remove opcatity
+          $(CurrentID).removeClass('opacity');
+          $(CurrentID).addClass('ship');
+          $('.board > div').not('.ship').removeClass();
 
-          case command.LEFT:
-            for (var i = 1; i < shipLength; i++) {
-              $('#' + Y  + (X - i) + "-1").addClass('ship');
-            }
-            break;
+          // add other rectange with ship class
+          switch (direction){
+            case command.UP:
+              for (var i = 1; i < shipLength; i++) {
+                $('#' + (Y - i) + X + "-1").addClass('ship');
+              }
+              break;
 
-          case command.RIGHT:
-            for (var i = 1; i < shipLength; i++) {
-              $('#' + Y + (X + i) + "-1").addClass('ship');
-            }
-            break;
+            case command.LEFT:
+              for (var i = 1; i < shipLength; i++) {
+                $('#' + Y  + (X - i) + "-1").addClass('ship');
+              }
+              break;
 
-          case command.DOWN:
-            for (var i = 1; i < shipLength; i++) {
-              $('#' + (Y+i) + X + "-1").addClass('ship');
-            }
-            break;
-          default:
-            break;
+            case command.RIGHT:
+              for (var i = 1; i < shipLength; i++) {
+                $('#' + Y + (X + i) + "-1").addClass('ship');
+              }
+              break;
+
+            case command.DOWN:
+              for (var i = 1; i < shipLength; i++) {
+                $('#' + (Y+i) + X + "-1").addClass('ship');
+              }
+              break;
+            default:
+              break;
+          }
+
+          console.log('index : ' + index);
+          console.log('ships lenght: ' + ships.length);
+          
+          //increase shiplength
+          index++;
+          shipLength = ships[index];
+          PickShip('ship' + shipLength);
+
+          // Check if all the ship have been placed
+          if ((index ) === ships.length) {
+            $('#Ready_button').removeClass('hidden');
+            $('#Ready_button').addClass('selected')
+            // end shipplacement
+            $(CurrentID).removeClass('selected');
+            $('.board > div').not('.ship').removeClass('opacity');
+            state = states.READY;
+            // highlight ready button
+          }
+
         }
-
-        console.log('index : ' + index);
-        console.log('ships lenght: ' + ships.length);
-        
-        //increase shiplength
-        index++;
-        shipLength = ships[index];
-        PickShip('ship' + shipLength);
-
-        // Check if all the ship have been placed
-        if ((index ) === ships.length) {
-          $('#Ready_button').removeClass('hidden');
-          $('#Ready_button').addClass('selected')
-          // end shipplacement
-          $(CurrentID).removeClass('selected');
-          state = states.READY;
-
-          // highlight ready button
-        }
-
 
         break;
 
@@ -545,3 +632,6 @@ function CheckPlacement(direct){
   return true
 }
   
+function GameBeginInit(){
+  selectedPoint = 11;
+}
