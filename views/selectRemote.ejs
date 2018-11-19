@@ -11,12 +11,17 @@
 <script>
     var socket = io.connect('http://localhost:3000');
     
+    // socket.emit("Get_All_Remote_Status");
+
+    socket.on("Cookie_Fail",function(){
+        window.location.href = './login';
+    })
+
     socket.on("Sever_Gamepad_Status",function(data)
     {
-        alert("Here!");
-        remote1 = data.status1;
-        remote2 = data.status2;
-        alert("status 1: " + remote1 + "   status 2:" + remote2);
+        var remote1 = data.status1;
+        var remote2 = data.status2;
+       // alert("status 1: " + remote1 + "   status 2:" + remote2);
         if(remote1 == true)
         {
             $("#remote1").addClass("selected_remote");
@@ -29,9 +34,17 @@
         }
     })
     $(document).ready(function(){
-        var check = 0;
+        var serverCheck = {
+            "type": "selectRemote",
+            "username": getCookie("username"),
+            "cookie": getCookie("seasion")
+        }
+        // alert(document.cookie);
+        socket.emit("from",serverCheck);
+        socket.emit("Transfer_to_selectRemote");
+        var check = 1;
         $("#submitbtn").click(function(){
-            socket.emit("Client_Select_Gamepad",check);
+            //socket.emit("Client_Select_Gamepad",check);
             window.location.href = './index';
         });
         $("#player1").click(function(){
@@ -59,6 +72,18 @@
                 check = 2;
         });
     });
+
+        function getCookie(name) {
+        var nameEQ = name + "=";
+        //alert(document.cookie);
+        var ca = document.cookie.split(';');
+        for (var i = 0; i < ca.length; i++) {
+            var c = ca[i];
+            while (c.charAt(0) == ' ') c = c.substring(1);
+            if (c.indexOf(nameEQ) != -1) return c.substring(nameEQ.length, c.length);
+        }
+        return null;
+    }
 </script>
 
 <style>

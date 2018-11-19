@@ -21,6 +21,12 @@
     })
 
     $(document).ready(function(){
+        var serverCheck = {
+            "type": "Register",
+            "username": {},
+            "cookie": {}
+        }
+        socket.emit("from",serverCheck);
         $('#submitbtn').on('click', function () {
             if ($('#password').val() === $('#repeat_password').val()) {
                 socket.emit("Sign_Up",{"username":$('#username').val(),"password":$('#password').val()});
