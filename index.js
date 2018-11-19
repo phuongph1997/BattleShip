@@ -48,7 +48,8 @@ server.listen(3000);
 var check_game_pad_1 = true;
 var check_game_pad_2 = true;
 var check_room;
-
+var check_ready=0;
+var check_timeout = 0;
 // socket.on("Get_All_Remote_Status", function(){
 
 // })
@@ -166,24 +167,31 @@ io.on("connection",function(socket){
 });
 
     socket.on("Gamepad_Connect",function(){
-    
-    if(check_game_pad_1== true){
-      // true san sang ket noi
-      socket.Phong="1";
-      check_game_pad_1 = false;
-      socket.join(socket.Phong);
-      socket.emit("Gamepad_Ok",socket.Phong);
-    }
-    else {
-      if(check_game_pad_2==true){
-        socket.Phong="2";
-        check_game_pad_2 = false;
-        socket.join(socket.Phong);
-        socket.emit("Gamepad_Ok",socket.Phong);
-      }
-    }
-	console.log("gamepab connect" +socket.Phong);
-});
+		if(check_game_pad_1== true){
+		  // true san sang ket noi
+		  socket.Phong="1";
+		  check_game_pad_1 = false;
+		  socket.join(socket.Phong);
+		  socket.emit("Gamepad_Ok",socket.Phong);
+		}
+		else {
+		  if(check_game_pad_2==true){
+			socket.Phong="2";
+			check_game_pad_2 = false;
+			socket.join(socket.Phong);
+			socket.emit("Gamepad_Ok",socket.Phong);
+		  }
+		}
+		console.log("gamepab connect" +socket.Phong);
+		
+		var status = {
+			"status1": check_game_pad_1,
+			"status2": check_game_pad_2
+		};
+		io.sockets.emit("Sever_Gamepad_Status",status);
+		console.log ("emit Server_Gamepad_status to everyone")
+		console.log(JSON.stringify(status));
+	});
     socket.on("disconnect",function(){
       console.log("co nguoi ngat ket noi "+ socket.id);
       if(socket.Phong=="1"){
@@ -217,10 +225,42 @@ io.on("connection",function(socket){
       console.log("select gamepab " +data);
       socket.join(data);
       check_room = data;
-
+  });
+  
+  socket.on("Client_PlaceShip_Done",function(data){
+	  console.log("Client_PlaceShip_Done receive")
+	  check_ready++;
+	  if(check_ready == 2 ){
+		  var num = randomNumber()
+		  if (num){
+			  io.sockets.in('1').emit("Server_SelectPlayTurn",true);
+			  io.sockets.in('2').emit("Server_SelectPlayTurn",false);
+		  }
+		  else {
+			  io.sockets.in('1').emit("Server_SelectPlayTurn",true);
+			  io.sockets.in('2').emit("Server_SelectPlayTurn",false);
+		  }
+		  check_ready = 0;
+	  }
   })
+  
+  socket.on("Client_Time_Out", function(data){
+	  console.log("Client Time out")
+	  check_timeout ++;
+	  if (check_timeout == 2){
+		  io.sockets.emit("Server_SwitchRole")
+		  check_timeout = 0;
+	  }
+  })
+
 });
 
+function randomNumber() 
+{
+	var number = Math.random()
+	console.log("random number : " + number)
+    return  (number > 0.5) ? 1 : 0; 
+}
 
 app.get("/", function(req, res){
   res.render("login");

@@ -9,7 +9,7 @@
 <script src="/socket.io/socket.io.js"></script>
 
 <script>
-    var socket = io.connect('http://localhost:3000');
+    var socket = io.connect('18.136.212.75:3000');
     
     // socket.emit("Get_All_Remote_Status");
 
@@ -19,6 +19,7 @@
 
     socket.on("Sever_Gamepad_Status",function(data)
     {
+		console.log("Sever_Gamepad_Status receive")
         var remote1 = data.status1;
         var remote2 = data.status2;
        // alert("status 1: " + remote1 + "   status 2:" + remote2);
@@ -27,11 +28,19 @@
             $("#remote1").addClass("selected_remote");
             $("#player1").attr("disabled",true);
         }
+		else {
+			$("#remote1").removeClass("selected_remote");
+            $("#player1").attr("disabled",false);
+		}
         if(remote2 == true)
         {
             $("#remote2").addClass("selected_remote");
             $("#player2").attr("disabled",true);
         }
+		else {
+			$("#remote2").removeClass("selected_remote");
+            $("#player2").attr("disabled",false);
+		}
     })
     $(document).ready(function(){
         var serverCheck = {

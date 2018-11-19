@@ -24,8 +24,8 @@ var time = 0;
 var timer ;
 
 // handle socket event
-//var socket = io.connect("18.136.212.75:3000")
-var socket = io.connect("localhost:3000")
+var socket = io.connect("18.136.212.75:3000")
+//var socket = io.connect("localhost:3000")
 
 socket.on("Cookie_Fail",function(){
 			window.location.href = './login';
@@ -56,6 +56,7 @@ socket.on("Server_Commands" ,function(data){
 });
 
 // socket event on Server_Opponent_Done
+/*
 socket.on("Server_Opponent_Done", function(data){
   console.log("Server_Opponent_Done receive")
   opponent_done = true;
@@ -63,10 +64,15 @@ socket.on("Server_Opponent_Done", function(data){
   if (!$('#waiting').hasClass('hidden')){
     GameBeginInit();
   }
-});
+});*/
 
 // socket event on Select play turn which send by server
 socket.on("Server_SelectPlayTurn", function(data){
+  console.log("Server_SelectPlayTurn receive")
+  opponent_done = true;
+
+  $('#waiting').addClass('hidden')
+  GameBeginInit();
   Switch_Turn(data)
 })
 
@@ -410,11 +416,7 @@ function Process(key){
         console.log('status : ready')
         $("#Ready_button").addClass('hidden')
         $('.score').show();
-        if (!opponent_done)
-          $('#waiting').removeClass('hidden')
-        else
-          GameBeginInit();
-        
+         $('#waiting').removeClass('hidden')
       }
       break;
     case states.PLAYERTURN:
