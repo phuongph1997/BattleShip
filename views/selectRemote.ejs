@@ -44,7 +44,7 @@
         socket.emit("Transfer_to_selectRemote");
         var check = 1;
         $("#submitbtn").click(function(){
-            //socket.emit("Client_Select_Gamepad",check);
+            socket.emit("Client_Select_Gamepad",check);
             window.location.href = './index';
         });
         $("#player1").click(function(){

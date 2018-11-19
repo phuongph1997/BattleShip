@@ -15,8 +15,7 @@
         window.location.href = './login';
     })
 
-        var socket = io.connect('http://localhost:3000');
-
+    
     socket.on("Server_Login_Sucess",function(random_string){
         alert("Login Success!");
         // cookie random string

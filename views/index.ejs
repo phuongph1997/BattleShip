@@ -6,30 +6,7 @@
     <link rel="stylesheet" href="style.css">
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
 	<script src="/socket.io/socket.io.js"></script>
-	<script>
-	var socket = io.connect('http://localhost:3000');
-	socket.on("Cookie_Fail",function(){
-			window.location.href = './login';
-		})
-			var serverCheck = {
-				"type": "Index",
-				"username": getCookie("username"),
-				"cookie": getCookie("seasion")
-			}
-			socket.emit("from",serverCheck);
-			//alert("Index!");
-		function getCookie(name) {
-			var nameEQ = name + "=";
-			//alert(document.cookie);
-			var ca = document.cookie.split(';');
-			for (var i = 0; i < ca.length; i++) {
-				var c = ca[i];
-			while (c.charAt(0) == ' ') c = c.substring(1);
-				if (c.indexOf(nameEQ) != -1) return c.substring(nameEQ.length, c.length);
-			}
-			return null;
-		}
-	</script>
+	
 </head>
   <body>
   	<div >

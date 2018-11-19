@@ -24,11 +24,34 @@ var time = 0;
 var timer ;
 
 // handle socket event
-var socket = io.connect("18.136.212.75:3000")
-//var socket = io.connect("localhost:3000")
+//var socket = io.connect("18.136.212.75:3000")
+var socket = io.connect("localhost:3000")
+
+socket.on("Cookie_Fail",function(){
+			window.location.href = './login';
+		})
+			var serverCheck = {
+				"type": "Index",
+				"username": getCookie("username"),
+				"cookie": getCookie("seasion")
+			}
+			socket.emit("from",serverCheck);
+			//alert("Index!");
+		function getCookie(name) {
+			var nameEQ = name + "=";
+			//alert(document.cookie);
+			var ca = document.cookie.split(';');
+			for (var i = 0; i < ca.length; i++) {
+				var c = ca[i];
+			while (c.charAt(0) == ' ') c = c.substring(1);
+				if (c.indexOf(nameEQ) != -1) return c.substring(nameEQ.length, c.length);
+			}
+			return null;
+		}
 
 // socket event on move
-socket.on("Server_Command" ,function(data){
+socket.on("Server_Commands" ,function(data){
+	console.log(data)
   Process(data);
 });
 

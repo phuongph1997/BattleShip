@@ -7,14 +7,9 @@ var app = express();
 var server = require("http").Server(app);
 var io = require("socket.io")(server);
 
-var sessionMiddleware = session({
-  secret: "keyboard cat"
-});
-app.use(sessionMiddleware);
+
 app.use(cookieParser());
-io.use(function (socket, next) {
-  sessionMiddleware(socket.request, socket.request.res, next);
-});
+
 var saveSessionKey;
 var db = mysql.createConnection({
   host    : 'localhost',
@@ -52,6 +47,7 @@ app.set("views","./views")
 server.listen(3000);
 var check_game_pad_1 = true;
 var check_game_pad_2 = true;
+var check_room;
 
 // socket.on("Get_All_Remote_Status", function(){
 
@@ -59,16 +55,8 @@ var check_game_pad_2 = true;
 
 io.on("connection",function(socket){
   var req = socket.request;
-  console.log("test dong 60:"+req.session.user_Name+":" );
-  if(req.session.user_Name == null){
-        console.log("test dong 62 rong" );
-  }
-  if(req.session.user_Name != null){
-        console.log("da chay vo dong 61");
-        db.query("SELECT * FROM users WHERE Username=?", [req.session.user_Name], function(err, rows, fields){
-        socket.emit("logged_in", {user: rows[0].Username});
-    });
-  }
+  
+  
   console.log("co nguoi ket noi "+ socket.id);
   socket.on("from",function(msg){
     console.log("Page type is: " + msg.type);
@@ -81,6 +69,10 @@ io.on("connection",function(socket){
         {
             socket.emit("Cookie_Fail");
         }
+		
+        socket.join(check_room);
+        console.log("connect with game pad: " + check_room);
+		console.log(io.sockets.adapter.rooms);
         break;
         case "selectRemote":
         // console.log("Save: " + saveSessionKey );
@@ -125,8 +117,8 @@ io.on("connection",function(socket){
                       const dataUser = rows[0].Username,  dataPass = rows[0].Password;
                         if(user == dataUser && pass == dataPass){
             
-                          req.session.user_Name = rows[0].Username;
-                          req.session.save();
+                          //req.session.user_Name = rows[0].Username;
+                          //req.session.save();
 // generate session key
                           var str = "";
                           for (; str.length < 32; str += Math.random().toString(36).substr(2));
@@ -144,9 +136,7 @@ io.on("connection",function(socket){
                     }
                   });
                 }
-                if(req.session.user_Name != null){
-                  console.log("test dong 110:"+req.session.user_Name+":" );
-                }
+                
               });
               break;
         case "Register":
@@ -176,7 +166,7 @@ io.on("connection",function(socket){
 });
 
     socket.on("Gamepad_Connect",function(){
-    //console.log(socket.adapter.rooms);
+    
     if(check_game_pad_1== true){
       // true san sang ket noi
       socket.Phong="1";
@@ -192,6 +182,7 @@ io.on("connection",function(socket){
         socket.emit("Gamepad_Ok",socket.Phong);
       }
     }
+	console.log("gamepab connect" +socket.Phong);
 });
     socket.on("disconnect",function(){
       console.log("co nguoi ngat ket noi "+ socket.id);
@@ -205,13 +196,28 @@ io.on("connection",function(socket){
       }
     });
   socket.on("Gamepad_Command",function(data){
-    io.sockets.in(socket.Phong).emit("Server_Commands",data);
+	  
+	  if(data== 'right')
+		  io.sockets.in(socket.Phong).emit("Server_Commands",'d');
+	  if(data== 'left')
+		  io.sockets.in(socket.Phong).emit("Server_Commands",'a');
+	  if(data== 'down')
+		  io.sockets.in(socket.Phong).emit("Server_Commands",'s');
+	  if(data== 'up')
+		  io.sockets.in(socket.Phong).emit("Server_Commands",'w');
+	  if(data== 'ok')
+		  io.sockets.in(socket.Phong).emit("Server_Commands",'f');
+	  if(data== 'cancle')
+		  io.sockets.in(socket.Phong).emit("Server_Commands",'g');
+	  
     console.log("nut bam : "+ data);
   });
 
   socket.on("Client_Select_Gamepad",function(data){
-      console.log("Stoping here!");
-    socket.Phong=data;
+      console.log("select gamepab " +data);
+      socket.join(data);
+      check_room = data;
+
   })
 });
 
