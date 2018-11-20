@@ -24,7 +24,7 @@ var time = 0;
 var timer ;
 
 // handle socket event
-var socket = io.connect("18.136.212.75:3000")
+var socket = io.connect("18.136.212.75")
 //var socket = io.connect("localhost:3000")
 
 socket.on("Cookie_Fail",function(){
@@ -77,6 +77,7 @@ socket.on("Server_SelectPlayTurn", function(data){
 })
 
 socket.on("Server_SwitchRole", function(data){
+	console.log("Server_SwitchRole receive")
   Switch_Turn()
 })
 
@@ -88,14 +89,16 @@ socket.on("Server_WereShot", function(data){
   // socket event emit Client_Shot_Result
   socket.emit("Client_Shot_Result", player1array[row][column] )
 
-  let PlayerID = '#'+selectedPoint+'-1'
+  let PlayerID = '#'+row + column+'-1'
   $(PlayerID).addClass('bomb')
   $('#right #shots').html("Shots: &nbsp; " + $('#left .bomb').length);
   if (player1array[row][column]){
+	  console ("true ")
     $(PlayerID).addClass('hit')
     $('#right #hits').html("Hits: &nbsp;&nbsp;&nbsp;&nbsp; " + $('#left .bomb.hit').length);
   } else {
-    //Switch_Turn()
+    Timer_Off()
+    Timer_On(2)
   }
 
   // check if you win the game
@@ -119,8 +122,8 @@ socket.on("Server_Shot_Result", function(data){
     Timer_Off()
     Timer_On(1)
   }
-  else 
-    Switch_Turn()
+  
+    //Switch_Turn()
   // check if you win the game
   if ( $('#right .bomb.hit').length == ships.reduce(getSum)){
     state = states.ENDGAME
@@ -700,11 +703,13 @@ function Timer2(){
 function Timer_On(index){
   time = TIMER_INTERVAL
   if (index == 1){
+	  console.log("timer 1 on")
     //$('#timer1').removeClass('hidden')
     Timer1()
     timer = setInterval(Timer1,1000)
   }
   else if (index == 2){
+	  console.log("timer 2 on")
     //$('#timer2').removeClass('hidden')
     Timer2()
     timer = setInterval(Timer2,1000)
@@ -712,6 +717,7 @@ function Timer_On(index){
 }
 
 function Timer_Off(){
+	console.log("timer off")
   $('#timer1').addClass('hidden')
   $('#timer2').addClass('hidden')
   clearInterval(timer);

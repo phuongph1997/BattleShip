@@ -44,20 +44,22 @@ app.set("views","./views")
 
 
 
-server.listen(3000);
+server.listen(80);
 var check_game_pad_1 = true;
 var check_game_pad_2 = true;
-var check_room;
+var check_room_1;
+var check_room_2;
 var check_ready=0;
 var check_timeout = 0;
+var turn;
 // socket.on("Get_All_Remote_Status", function(){
 
 // })
 
 io.on("connection",function(socket){
   var req = socket.request;
-  
-  
+
+
   console.log("co nguoi ket noi "+ socket.id);
   socket.on("from",function(msg){
     console.log("Page type is: " + msg.type);
@@ -70,7 +72,7 @@ io.on("connection",function(socket){
         {
             socket.emit("Cookie_Fail");
         }
-		
+
         socket.join(check_room);
         console.log("connect with game pad: " + check_room);
 		console.log(io.sockets.adapter.rooms);
@@ -92,7 +94,7 @@ io.on("connection",function(socket){
                     });
             }
             else{
-// New emit     
+// New emit
         console.log(" Fail!");
                 socket.emit("Cookie_Fail");
             }
@@ -111,13 +113,13 @@ io.on("connection",function(socket){
                   console.log("da chay vo dong 69");
                   db.query("SELECT * FROM users WHERE Username=?", [user], function(err, rows, fields){
                     if(rows.length == 0){
-            
+
                       socket.emit("Server_Login_Fail");
                     }
                     else{
                       const dataUser = rows[0].Username,  dataPass = rows[0].Password;
                         if(user == dataUser && pass == dataPass){
-            
+
                           //req.session.user_Name = rows[0].Username;
                           //req.session.save();
 // generate session key
@@ -137,7 +139,7 @@ io.on("connection",function(socket){
                     }
                   });
                 }
-                
+
               });
               break;
         case "Register":
@@ -145,7 +147,7 @@ io.on("connection",function(socket){
             {
               user= data.username;
               pass = data.password;
-          
+
               db.query("SELECT * FROM users WHERE Username=?", [user], function(err, rows, fields){
                 if(rows.length == 0){
                     console.log("Success!");
@@ -183,7 +185,7 @@ io.on("connection",function(socket){
 		  }
 		}
 		console.log("gamepab connect" +socket.Phong);
-		
+
 		var status = {
 			"status1": check_game_pad_1,
 			"status2": check_game_pad_2
@@ -195,16 +197,18 @@ io.on("connection",function(socket){
     socket.on("disconnect",function(){
       console.log("co nguoi ngat ket noi "+ socket.id);
       if(socket.Phong=="1"){
+		  console.log ("ngat ket noi gamepad 1")
         check_game_pad_1 = true;
       }
       else {
         if(socket.Phong=="2"){
+			console.log("Ngat ket noi gamepad 2")
           check_game_pad_2 = true;
         }
       }
     });
   socket.on("Gamepad_Command",function(data){
-	  
+
 	  if(data== 'right')
 		  io.sockets.in(socket.Phong).emit("Server_Commands",'d');
 	  if(data== 'left')
@@ -217,49 +221,103 @@ io.on("connection",function(socket){
 		  io.sockets.in(socket.Phong).emit("Server_Commands",'f');
 	  if(data== 'cancle')
 		  io.sockets.in(socket.Phong).emit("Server_Commands",'g');
-	  
+
     console.log("nut bam : "+ data);
   });
 
   socket.on("Client_Select_Gamepad",function(data){
+	  if (data == 1)
+		  check_game_pad_1 = true;
+	  else if (data == 2)
+		  check_game_pad_2 = true;
+	  
+	  var status = {
+			"status1": check_game_pad_1,
+			"status2": check_game_pad_2
+		};
+	  io.sockets.emit("Sever_Gamepad_Status",status);
+	  
       console.log("select gamepab " +data);
       socket.join(data);
       check_room = data;
   });
-  
+
   socket.on("Client_PlaceShip_Done",function(data){
 	  console.log("Client_PlaceShip_Done receive")
 	  check_ready++;
 	  if(check_ready == 2 ){
 		  var num = randomNumber()
 		  if (num){
+			  turn=1;
 			  io.sockets.in('1').emit("Server_SelectPlayTurn",true);
 			  io.sockets.in('2').emit("Server_SelectPlayTurn",false);
 		  }
 		  else {
-			  io.sockets.in('1').emit("Server_SelectPlayTurn",true);
-			  io.sockets.in('2').emit("Server_SelectPlayTurn",false);
+			  io.sockets.in('1').emit("Server_SelectPlayTurn",false);
+			  io.sockets.in('2').emit("Server_SelectPlayTurn",true);
+			  turn =2;
 		  }
 		  check_ready = 0;
 	  }
   })
-  
+
   socket.on("Client_Time_Out", function(data){
-	  console.log("Client Time out")
 	  check_timeout ++;
+	  console.log("Client Time out " + check_timeout)
 	  if (check_timeout == 2){
+		  if (turn == 1)
+			  turn = 2
+		  else turn = 1
 		  io.sockets.emit("Server_SwitchRole")
 		  check_timeout = 0;
 	  }
   })
+  socket.on("Client_Shot",function(data){
+    //row= data.row;
+    //column = data.column;
+	console.log("Client shot receive : " + data)
+    if (turn == 1)
+    {
+		console.log("1 shot 2")
+      io.sockets.in('2').emit("Server_WereShot",data);
+    }
+	if (turn == 2){
+		console.log("2 shot 1")
+	  io.sockets.in('1').emit("Server_WereShot",data);
+	}
+      
+  })
+  socket.on("Client_Shot_Result",function(data){
+    //row= data.row;
+    //column = data.column;
+	console.log("Client_Shot_Result : " + data)
+	if (turn == 1)
+	{
+	  io.sockets.in('1').emit("Server_Shot_Result",data);
+	}
+	  else {
+		if (turn == 2)
+		  io.sockets.in('2').emit("Server_Shot_Result",data);
+	  }
+	  if (!data){
+		  if (turn == 1)
+			  turn = 2
+		  else turn = 1
+		  io.sockets.emit("Server_SwitchRole")
+		  check_timeout = 0;
+		  }
+		  
+  })
+
+
 
 });
 
-function randomNumber() 
+function randomNumber()
 {
 	var number = Math.random()
 	console.log("random number : " + number)
-    return  (number > 0.5) ? 1 : 0; 
+    return  (number > 0.5) ? 1 : 0;
 }
 
 app.get("/", function(req, res){
