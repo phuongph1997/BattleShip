@@ -12,6 +12,7 @@ var Player2_Login_Fail = false;
 var First_UserName = null;
 var Error_Login = false;
 var TwoUserSameTime = false;
+var Gamepad1_Connected = false;
 app.use(cookieParser());
 
 var saveSessionKey = [];
@@ -276,8 +277,12 @@ io.on("connection",function(socket){
 });
 
     socket.on("Gamepad_Connect",function(){
+		if(!(Gamepad1_Connected))
+		{
 		if(check_game_pad_1== true){
 		  // true san sang ket noi
+		  Gamepad1_Connected = true;
+		  console.log("Gamepad 1 connected");
 		  socket.Phong="1";
 		  check_game_pad_1 = false;
 		  socket.join(socket.Phong);
@@ -285,11 +290,21 @@ io.on("connection",function(socket){
 		}
 		else {
 		  if(check_game_pad_2==true){
+			  console.log("Gamepad 2 connected");
 			socket.Phong="2";
 			check_game_pad_2 = false;
 			socket.join(socket.Phong);
 			socket.emit("Gamepad_Ok",socket.Phong);
 		  }
+		}
+		}
+		else{
+			  console.log("Gamepad 2 connected");
+			socket.Phong="2";
+			check_game_pad_2 = false;
+			socket.join(socket.Phong);
+			socket.emit("Gamepad_Ok",socket.Phong);
+			Gamepad1_Connected = false;
 		}
 		//console.log("gamepab connect" +socket.Phong);
 
