@@ -28,6 +28,7 @@ var socket = io.connect("18.136.212.75")
 //var socket = io.connect("localhost:3000")
 
 socket.on("Cookie_Fail",function(){
+	alert("Call back login from index! ejs");
 			window.location.href = './login';
 		})
 			var serverCheck = {

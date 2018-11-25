@@ -51,6 +51,11 @@ h1 {
   border: 5px solid #AFB42B;
 }
 
+.board.shoot,
+.board.loser {
+  border: 5px solid #AFB42B;
+}
+
 /*
   Display block in the board
 */

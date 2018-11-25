@@ -6,11 +6,17 @@ var mysql = require('mysql');
 var app = express();
 var server = require("http").Server(app);
 var io = require("socket.io")(server);
-
-
+var NumberOfUser = 0;
+var Player1_Login_Fail = false;
+var Player2_Login_Fail = false;
+var First_UserName = null;
+var Error_Login = false;
+var TwoUserSameTime = false;
 app.use(cookieParser());
 
-var saveSessionKey;
+var saveSessionKey = [];
+var index_SessionKey = 0;
+var saveUser;
 var db = mysql.createConnection({
   host    : 'localhost',
   user    : 'root',
@@ -60,31 +66,32 @@ io.on("connection",function(socket){
   var req = socket.request;
 
 
-  console.log("co nguoi ket noi "+ socket.id);
+  console.log("ID ket noi: "+ socket.id);
   socket.on("from",function(msg){
-    console.log("Page type is: " + msg.type);
+    //console.log("Page type is: " + msg.type);
     switch(msg.type){
         case "Index":
-        console.log("on emit from index!");
-        console.log("Save: " + saveSessionKey );
-        console.log("Client: " + msg.cookie );
-        if(msg.cookie != saveSessionKey)
+        //console.log("on emit from index!");
+        console.log("Server save Cookie: " + saveSessionKey[0] + "  --  "  + saveSessionKey[1]);
+        console.log("Client Send Cookie: " + msg.cookie );
+        if((msg.cookie != saveSessionKey[0])&&(msg.cookie != saveSessionKey[1]))
         {
+			console.log("Call back login from index!");
             socket.emit("Cookie_Fail");
         }
-
         socket.join(check_room);
-        console.log("connect with game pad: " + check_room);
+        console.log("Connect GamePad: " + check_room);
 		console.log(io.sockets.adapter.rooms);
         break;
         case "selectRemote":
         // console.log("Save: " + saveSessionKey );
         // console.log("Client: " + msg.cookie );
-            if(msg.cookie == saveSessionKey)
+		//console.log("User from selectRemote: " + msg.username + " User Saved: " + saveUser);
+            if(((msg.cookie == saveSessionKey[0])||(msg.cookie == saveSessionKey[1])) && (msg.username == saveUser))
             {
-                console.log(" Match!");
+                //console.log(" Match!");
                 socket.on("Transfer_to_selectRemote",function(){
-                    console.log("Transfering Page!\r\n");
+                    //console.log("Transfering Page!\r\n");
                     var status = {
                         "status1": check_game_pad_1,
                         "status2": check_game_pad_2
@@ -95,55 +102,147 @@ io.on("connection",function(socket){
             }
             else{
 // New emit
-        console.log(" Fail!");
+				console.log("Call back login from selectRemote!");
                 socket.emit("Cookie_Fail");
             }
                 break;
         case "Login":
-            console.log("Loging!!");
-            socket.on("Client_Login", function(data){
-                console.log("Login!!");
-                user = data.user,
-                pass = data.pass;
-                console.log(user + ':' + pass +':');
-                if( !user || !pass){
-                  socket.emit("Server_Login_Fail");
-                }
-                else {
-                  console.log("da chay vo dong 69");
-                  db.query("SELECT * FROM users WHERE Username=?", [user], function(err, rows, fields){
-                    if(rows.length == 0){
-
-                      socket.emit("Server_Login_Fail");
-                    }
-                    else{
-                      const dataUser = rows[0].Username,  dataPass = rows[0].Password;
-                        if(user == dataUser && pass == dataPass){
-
-                          //req.session.user_Name = rows[0].Username;
-                          //req.session.save();
-// generate session key
-                          var str = "";
-                          for (; str.length < 32; str += Math.random().toString(36).substr(2));
-                          var SessionKey = str.substr(0, 32);
-                          saveSessionKey = SessionKey;
-                          var saveCookie = {
-                                "resUserName": user,
-                                "resSessionkey": SessionKey
-                          };
-                          socket.emit("Server_Login_Sucess",saveCookie);
-                        }else{
-                          socket.emit("Server_Login_Fail");
-                          console.log("tai khoan pass sai");
-                        }
-                    }
-                  });
-                }
-
-              });
-              break;
+			if(NumberOfUser == 2)
+			{
+				//console.log("Over User!");
+				NumberOfUser = 1;
+			}
+			NumberOfUser+=1;
+			console.log("Is on user: " + NumberOfUser);
+			//console.log("Loging!!");
+			if(NumberOfUser == 2)
+				{
+					console.log("2 User in!");
+					if(First_UserName == null)
+					{
+						//console.log("2 User but didn't input pass!");
+						NumberOfUser = 1;
+						TwoUserSameTime = true;
+					}
+				}
+			socket.on("Client_Login", function(data){
+				//console.log("Login!!");
+				user = data.user,
+				pass = data.pass;
+				//console.log("2 User in, Number of user: " + NumberOfUser);
+				if(NumberOfUser == 2)
+				{
+					if(user == First_UserName)
+					{
+						Error_Login = true;
+						NumberOfUser = 1;
+					}
+				}
+					console.log("User: " + user + '  Pass :' + pass);
+				if(Error_Login == true)
+				{
+					//console.log("User: " + user + " was in use!");
+					socket.emit("Server_Login_Fail");
+					Error_Login = false;
+				}
+				else
+				{
+					if( (!user) || (!pass) )
+						{
+							socket.emit("Server_Login_Fail");
+//							console.log("Invalid user or password!");
+							if(NumberOfUser == 1)
+								{
+									Player1_Login_Fail = true;
+								}
+								if(NumberOfUser == 2)
+								{
+									Player2_Login_Fail = true;
+								}
+						}
+					else 
+					{
+						//console.log("check account!");		
+						//console.log("da chay vo dong 69");
+						db.query("SELECT * FROM users WHERE Username=?", [user], function(err, rows, fields){
+						if(rows.length == 0)
+						{
+								if(NumberOfUser == 1)
+								{
+									Player1_Login_Fail = true;
+								}
+								if(NumberOfUser == 2)
+								{
+									Player2_Login_Fail = true;
+								}
+							socket.emit("Server_Login_Fail");
+//							console.log("Lengh = 0");
+						}
+						else
+						{
+							const dataUser = rows[0].Username,  dataPass = rows[0].Password;
+							if(user == dataUser && pass == dataPass)
+							{
+								saveUser = user;
+								if(NumberOfUser == 1)
+								{
+									First_UserName = user;
+									//console.log("User save to check: " + First_UserName);
+									if(TwoUserSameTime == true)
+									{
+										console.log("2 User in, increase!");
+										NumberOfUser+=1;
+									}
+								}
+								if(NumberOfUser == 2 && !(TwoUserSameTime))
+								{
+									//console.log("2User, User login success!");
+									NumberOfUser = 0;
+									First_UserName = null;
+								}
+								if((NumberOfUser == 2) && (TwoUserSameTime))
+								{
+									//console.log("Wanna come here!");
+									TwoUserSameTime = false;
+								}
+								//req.session.user_Name = rows[0].Username;
+								//req.session.save();
+								// generate session key
+								var str = "";
+								for (; str.length < 32; str += Math.random().toString(36).substr(2));
+								var SessionKey = str.substr(0, 32);
+								saveSessionKey[index_SessionKey] = SessionKey;
+								index_SessionKey+= 1;
+								var saveCookie = 
+								{
+									"resUserName": user,
+									"resSessionkey": SessionKey
+								};
+								console.log("Cookie Created:  " + SessionKey);
+								socket.emit("Server_Login_Sucess",saveCookie);
+							}
+							else
+							{
+								console.log("Check account not in SQL");
+								if(NumberOfUser == 1)
+								{
+									Player1_Login_Fail = true;
+								}
+								if(NumberOfUser == 2)
+								{
+									Player2_Login_Fail = true;
+								}
+								socket.emit("Server_Login_Fail");
+								//console.log("tai khoan pass sai");
+							}
+						}
+						});
+					}
+				}
+			});
+			break;
         case "Register":
-            socket.on("Sign_Up", function(data)
+		socket.on("Sign_Up", function(data)
             {
               user= data.username;
               pass = data.password;
@@ -164,6 +263,14 @@ io.on("connection",function(socket){
                 }
             });
             });
+			if(NumberOfUser == 1)
+			{
+			NumberOfUser = 0;
+			}
+			if(NumberOfUser == 2)
+			{
+				NumberOfUser = 1;
+			}
             break;
         }
 });
@@ -184,18 +291,32 @@ io.on("connection",function(socket){
 			socket.emit("Gamepad_Ok",socket.Phong);
 		  }
 		}
-		console.log("gamepab connect" +socket.Phong);
+		//console.log("gamepab connect" +socket.Phong);
 
 		var status = {
 			"status1": check_game_pad_1,
 			"status2": check_game_pad_2
 		};
+		console.log ("Nguoi choi da ket noi: ",socket.Phong )
 		io.sockets.emit("Sever_Gamepad_Status",status);
-		console.log ("emit Server_Gamepad_status to everyone")
+		//console.log ("emit Server_Gamepad_status to everyone")
 		console.log(JSON.stringify(status));
 	});
     socket.on("disconnect",function(){
       console.log("co nguoi ngat ket noi "+ socket.id);
+//	  console.log("Number of user is: " + NumberOfUser);
+//	  console.log("Player 1 : " + Player1_Login_Fail + '  Player 2 :' + Player2_Login_Fail);
+	  if(Player1_Login_Fail == true) 
+	  {
+		  NumberOfUser = 1;
+		  Player1_Login_Fail = false;
+	  }
+	  if(Player2_Login_Fail == true)
+	  {
+		  NumberOfUser = 1;
+		  Player2_Login_Fail = false;
+	  }
+//	  	  console.log("Number of user is 2: " + NumberOfUser);
       if(socket.Phong=="1"){
 		  console.log ("ngat ket noi gamepad 1")
         check_game_pad_1 = true;
@@ -236,14 +357,13 @@ io.on("connection",function(socket){
 			"status2": check_game_pad_2
 		};
 	  io.sockets.emit("Sever_Gamepad_Status",status);
-	  
-      console.log("select gamepab " +data);
+	   
+      console.log("Selected GamePad " + data);
       socket.join(data);
       check_room = data;
   });
 
   socket.on("Client_PlaceShip_Done",function(data){
-	  console.log("Client_PlaceShip_Done receive")
 	  check_ready++;
 	  if(check_ready == 2 ){
 		  var num = randomNumber()

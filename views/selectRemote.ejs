@@ -14,6 +14,7 @@
     // socket.emit("Get_All_Remote_Status");
 
     socket.on("Cookie_Fail",function(){
+		alert("Call back login from selectRemote! ejs");
         window.location.href = './login';
     })
 
@@ -51,10 +52,17 @@
         // alert(document.cookie);
         socket.emit("from",serverCheck);
         socket.emit("Transfer_to_selectRemote");
-        var check = 1;
+        var check = 0;
         $("#submitbtn").click(function(){
+			if(check == 0)
+			{
+				alert("No remote seledted!");
+			}
+			else{
             socket.emit("Client_Select_Gamepad",check);
             window.location.href = './index';
+			}
+			
         });
         $("#player1").click(function(){
             if(check ===2)
