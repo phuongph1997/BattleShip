@@ -118,6 +118,9 @@ socket.on("Server_Shot_Result", function(data){
 
   $('#left #shots').html("Shots: &nbsp; " + $('#right .bomb').length);
   if (data){
+    // Emit to ESP8266 that HIT true ship, then turn on the vibration
+
+    socket.emit("Client_Hit_Vibration","Hit");
     $(CurrentID).addClass('hit');
     $('#left #hits').html("Hits: &nbsp;&nbsp;&nbsp;&nbsp; " + $('#right .bomb.hit').length);
     Timer_Off()

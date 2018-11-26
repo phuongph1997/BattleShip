@@ -1,0 +1,12 @@
+.\objects\uart_esp8266.o: uart_ESP8266.c
+.\objects\uart_esp8266.o: uart_ESP8266.h
+.\objects\uart_esp8266.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
+.\objects\uart_esp8266.o: ..\Nuvoton\NUC140BSP\CMSIS\CM0\DeviceSupport\Nuvoton\NUC1xx\NUC1xx.h
+.\objects\uart_esp8266.o: ..\Nuvoton\NUC140BSP\CMSIS\CM0\CoreSupport\core_cm0.h
+.\objects\uart_esp8266.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\objects\uart_esp8266.o: ..\Nuvoton\NUC140BSP\CMSIS\CM0\DeviceSupport\Nuvoton\NUC1xx\system_NUC1xx.h
+.\objects\uart_esp8266.o: ..\Nuvoton\NUC140BSP\NuvotonPlatform_Keil\Include\System\SysInfra.h
+.\objects\uart_esp8266.o: ..\Nuvoton\NUC140BSP\NuvotonPlatform_Keil\Include\System\ModuleID.h
+.\objects\uart_esp8266.o: ..\Nuvoton\NUC140BSP\NuvotonPlatform_Keil\Include\Driver\DrvUART.h
+.\objects\uart_esp8266.o: ..\Nuvoton\NUC140BSP\NuvotonPlatform_Keil\Include\Driver\DrvGPIO.h
+.\objects\uart_esp8266.o: ..\Nuvoton\NUC140BSP\NuvotonPlatform_Keil\Include\Driver\DrvSYS.h

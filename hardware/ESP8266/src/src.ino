@@ -71,6 +71,21 @@ void setup() {
 void loop() {
      // Luôn luôn giữ kết nối với server.
     socket.loop();
+
+    socket.on(Client_Hit_Vibration,function(data)
+    {
+      switch(data)
+      {
+        case "Hit":
+            Serial.write("Short_Vibra");
+        break;
+        case "EndGame":
+            Serial.write("Long_Vibra");
+        break;
+        case default:
+        break;
+      }
+    })
     if (Serial.available())
     {
       uint8_t input = Serial.read();

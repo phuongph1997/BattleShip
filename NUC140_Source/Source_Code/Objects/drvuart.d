@@ -1,0 +1,10 @@
+.\objects\drvuart.o: ..\Nuvoton\NUC140BSP\NuvotonPlatform_Keil\Src\Driver\DrvUART.c
+.\objects\drvuart.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
+.\objects\drvuart.o: ..\Nuvoton\NUC140BSP\CMSIS\CM0\DeviceSupport\Nuvoton\NUC1xx\NUC1xx.h
+.\objects\drvuart.o: ..\Nuvoton\NUC140BSP\CMSIS\CM0\CoreSupport\core_cm0.h
+.\objects\drvuart.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\objects\drvuart.o: ..\Nuvoton\NUC140BSP\CMSIS\CM0\DeviceSupport\Nuvoton\NUC1xx\system_NUC1xx.h
+.\objects\drvuart.o: ..\Nuvoton\NUC140BSP\NuvotonPlatform_Keil\Include\System\SysInfra.h
+.\objects\drvuart.o: ..\Nuvoton\NUC140BSP\NuvotonPlatform_Keil\Include\System\ModuleID.h
+.\objects\drvuart.o: ..\Nuvoton\NUC140BSP\NuvotonPlatform_Keil\Include\Driver\DrvUART.h
+.\objects\drvuart.o: ..\Nuvoton\NUC140BSP\NuvotonPlatform_Keil\Include\Driver\DrvSYS.h

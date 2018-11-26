@@ -1,0 +1,56 @@
+This Basic Software Package (BSP) includes
+NUC140 interface device driver, learning board driver, and sample code for interfacing with sensor module
+
+In order to use it, you will need to install
+1) Keil MDK (v4.7 was used to run the sample codes
+2) NuLink USB driver (NuLink is a built-in ICE circuit on NUC140 learning board)
+3) unzip this BSP into C:\
+
+Directory Hierarchy
+C:\Nuvoton\Lecture         --> educational material (in .ppt) for reference
+C:\Nuvoton\NUC140SeriesBSP --> NUC140 learning board Basic Software Package
+C:\Nuvoton\NUC140SeriesBSP\NuvotonPlatform_Keil\Include --> C header files for NUC140
+C:\Nuvoton\NUC140SeriesBSP\NuvotonPlatform_Keil\Src     --> C source codes for NUC140
+C:\Nuvoton\NUC140SeriesBSP\NuvotonPlatform_Keil\Lib     --> special library code (adpcm, rf dongle)
+C:\Nuvoton\NUC140SeriesBSP\NuvotonPlatform_Keil\Sample  --> all sample codes
+C:\Nuvoton\NUC140SeriesBSP\NuvotonPlatform_Keil\Sample\Driver        --> NUC140 interface driver sample codes
+C:\Nuvoton\NUC140SeriesBSP\NuvotonPlatform_Keil\Sample\EduProjCode --> educational project codes used in the lecture
+C:\Nuvoton\NUC140SeriesBSP\NuvotonPlatform_Keil\Sample\EduSampleCode --> educational sample codes used in the lecture
+C:\Nuvoton\NUC140SeriesBSP\NuvotonPlatform_Keil\Sample\NUC1xx-LB_002 --> Nu-LB-NUC140 learning board applicaiton sample codes
+C:\Nuvoton\NUC140SeriesBSP\NuvotonPlatform_Keil\Sample\USB           --> NUC140 USB related sample codes
+
+Revision History :
+
+2013/5/31
+<Revised>
+LCD_Driver.c to support draw_LCD(displaybuffer) without array conversion
+<Added>
+Smpl_ADC_Joystick    : joystick input using ADC
+Smpl_CAN_Keypad_Logo : keypad input to print Nuvoton logo on another board through CAN bus
+Smpl_USB_Mouse_Keypad: keypad input as USB mouse 
+
+2013/8/26
+<Revised>
+Smpl_PWM_Tone_Keypad : add Driver_PWM.c , using PWM Speaker (2N2222 soldered on 8 ohm speaker)
+<Added>
+Smpl_PWM_Music :       play "To Alice", add Pitch array
+Smpl_LCD_Game_Invader: a demo of Invader (without bullet and collison detection)
+                       added Font5x7.h & printC, printS functions
+
+2013/9/10
+<Revised>
+Smpl_CAN       : remove conditional print when doing CAN_ShowMSg, double check CAN transmit OK
+Smpl_CAN_Timer : remove printing local timer value, Timer interrupt will only do CAN_TX
+<added>
+Smpl_I2C_MPU6050_angle : calculate anlge from accelerometer value
+Smpl_I2C_MPU6050_tilt  : calculate tilt  from accelerometer value
+Smpl_LCD_Pingpong: LCD Animation of PingPong
+Proj_VacuumCleaner: bluetooth command record/playback
+
+BTButton.zip : an Android 4.2 App sample code 
+               for using bluetooth to send command to NUC140 learning board (with a bluetooth module)
+FacultyTraining_20130910.zip : Faculty Training slides
+
+2013/09/22
+<Revised>
+Remove retarget.c from all projects to prevent compilation error.

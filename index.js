@@ -444,6 +444,32 @@ io.on("connection",function(socket){
 		  
   })
 
+	socket.on("Client_Hit_Vibration",function(data)
+	{
+		switch(data)
+		{
+			case "Hit":
+				if(turn == 1)
+				{
+					io.sockets.in('1').emit("Server_SendVibra",data);
+				}
+				else if(turn == 2)
+				{
+					io.sockets.in('2').emit("Server_SendVibra",data);
+				}
+				break;
+			case "EndGame":
+				if(turn == 1)
+				{
+					io.sockets.in('1').emit("Server_SendVibra",data);
+				}
+				else if(turn == 2)
+				{
+					io.sockets.in('2').emit("Server_SendVibra",data);
+				}
+				break;
+		}
+	})
 
 
 });
