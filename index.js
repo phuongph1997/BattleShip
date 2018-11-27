@@ -6,18 +6,16 @@ var mysql = require('mysql');
 var app = express();
 var server = require("http").Server(app);
 var io = require("socket.io")(server);
-var NumberOfUser = 0;
-var Player1_Login_Fail = false;
-var Player2_Login_Fail = false;
-var First_UserName = null;
-var Error_Login = false;
-var TwoUserSameTime = false;
 var Gamepad1_Connected = false;
+
+var Login_SocketID_Arr = [];
+var User_Name_Arr = [];
+var AfterLogin_Status_Arr = [];
+var __IndexOfArr = 0;
+var __User_Used = false;
+var __User_Disconnect = false;
 app.use(cookieParser());
 
-var saveSessionKey = [];
-var index_SessionKey = 0;
-var saveUser;
 var db = mysql.createConnection({
   host    : 'localhost',
   user    : 'root',
@@ -73,9 +71,9 @@ io.on("connection",function(socket){
     switch(msg.type){
         case "Index":
         //console.log("on emit from index!");
-        console.log("Server save Cookie: " + saveSessionKey[0] + "  --  "  + saveSessionKey[1]);
+        //console.log("Server save Cookie: " + saveSessionKey[0] + "  --  "  + saveSessionKey[1]);
         console.log("Client Send Cookie: " + msg.cookie );
-        if((msg.cookie != saveSessionKey[0])&&(msg.cookie != saveSessionKey[1]))
+        if((msg.cookie !=saveSessionKey))
         {
 			console.log("Call back login from index!");
             socket.emit("Cookie_Fail");
@@ -87,9 +85,10 @@ io.on("connection",function(socket){
         case "selectRemote":
         // console.log("Save: " + saveSessionKey );
         // console.log("Client: " + msg.cookie );
-		//console.log("User from selectRemote: " + msg.username + " User Saved: " + saveUser);
-            if(((msg.cookie == saveSessionKey[0])||(msg.cookie == saveSessionKey[1])) && (msg.username == saveUser))
+            if(msg.cookie == saveSessionKey)
             {
+				AfterLogin_Status_Arr[__IndexOfArr] = true;
+				Login_SocketID_Arr[__IndexOfArr] = socket.id;
                 //console.log(" Match!");
                 socket.on("Transfer_to_selectRemote",function(){
                     //console.log("Transfering Page!\r\n");
@@ -106,60 +105,19 @@ io.on("connection",function(socket){
 				console.log("Call back login from selectRemote!");
                 socket.emit("Cookie_Fail");
             }
+			for(var i = 1 ; i<=__IndexOfArr;i++)
+			{
+				console.log("Status: " + AfterLogin_Status_Arr[i]);
+			}
                 break;
         case "Login":
-			if(NumberOfUser == 2)
-			{
-				//console.log("Over User!");
-				NumberOfUser = 1;
-			}
-			NumberOfUser+=1;
-			console.log("Is on user: " + NumberOfUser);
-			//console.log("Loging!!");
-			if(NumberOfUser == 2)
-				{
-					console.log("2 User in!");
-					if(First_UserName == null)
-					{
-						//console.log("2 User but didn't input pass!");
-						NumberOfUser = 1;
-						TwoUserSameTime = true;
-					}
-				}
 			socket.on("Client_Login", function(data){
-				//console.log("Login!!");
+                //console.log("Login!!");
 				user = data.user,
-				pass = data.pass;
-				//console.log("2 User in, Number of user: " + NumberOfUser);
-				if(NumberOfUser == 2)
-				{
-					if(user == First_UserName)
-					{
-						Error_Login = true;
-						NumberOfUser = 1;
-					}
-				}
-					console.log("User: " + user + '  Pass :' + pass);
-				if(Error_Login == true)
-				{
-					//console.log("User: " + user + " was in use!");
-					socket.emit("Server_Login_Fail");
-					Error_Login = false;
-				}
-				else
-				{
+                pass = data.pass;
 					if( (!user) || (!pass) )
 						{
 							socket.emit("Server_Login_Fail");
-//							console.log("Invalid user or password!");
-							if(NumberOfUser == 1)
-								{
-									Player1_Login_Fail = true;
-								}
-								if(NumberOfUser == 2)
-								{
-									Player2_Login_Fail = true;
-								}
 						}
 					else 
 					{
@@ -168,52 +126,45 @@ io.on("connection",function(socket){
 						db.query("SELECT * FROM users WHERE Username=?", [user], function(err, rows, fields){
 						if(rows.length == 0)
 						{
-								if(NumberOfUser == 1)
-								{
-									Player1_Login_Fail = true;
-								}
-								if(NumberOfUser == 2)
-								{
-									Player2_Login_Fail = true;
-								}
 							socket.emit("Server_Login_Fail");
-//							console.log("Lengh = 0");
 						}
 						else
 						{
 							const dataUser = rows[0].Username,  dataPass = rows[0].Password;
 							if(user == dataUser && pass == dataPass)
 							{
-								saveUser = user;
-								if(NumberOfUser == 1)
+								if(__IndexOfArr == 0)
 								{
-									First_UserName = user;
-									//console.log("User save to check: " + First_UserName);
-									if(TwoUserSameTime == true)
-									{
-										console.log("2 User in, increase!");
-										NumberOfUser+=1;
-									}
+									User_Name_Arr[__IndexOfArr] = user;
 								}
-								if(NumberOfUser == 2 && !(TwoUserSameTime))
+                                //User_Status_Arr[__IndexOfArr] = true;
+                                if(__IndexOfArr != 0)
+                                {
+                                    for(var i = 0; i < __IndexOfArr; i++)
+                                    {
+											console.log("Before: " + User_Name_Arr[i] + " After: " + user);
+                                            if((User_Name_Arr[i] == user) && (User_Name_Arr[i] != undefined))
+                                            {
+                                                 socket.emit("Server_Login_Fail");
+												 console.log("User name was in use!!!");
+												 console.log("No add: " + __IndexOfArr);
+                                               return 1;
+                                            }
+                                    }
+									console.log("Run here!!");
+								User_Name_Arr[__IndexOfArr] = user;
+                                }
+								__IndexOfArr++;
+								AfterLogin_Status_Arr[__IndexOfArr] = false;
+								console.log("Add: " + __IndexOfArr);
+								for(var i = 0 ;i<__IndexOfArr;i++)
 								{
-									//console.log("2User, User login success!");
-									NumberOfUser = 0;
-									First_UserName = null;
+									console.log("User: " + User_Name_Arr[i] + "  ");
 								}
-								if((NumberOfUser == 2) && (TwoUserSameTime))
-								{
-									//console.log("Wanna come here!");
-									TwoUserSameTime = false;
-								}
-								//req.session.user_Name = rows[0].Username;
-								//req.session.save();
-								// generate session key
 								var str = "";
 								for (; str.length < 32; str += Math.random().toString(36).substr(2));
-								var SessionKey = str.substr(0, 32);
-								saveSessionKey[index_SessionKey] = SessionKey;
-								index_SessionKey+= 1;
+                                var SessionKey = str.substr(0, 32);
+                                saveSessionKey = SessionKey;
 								var saveCookie = 
 								{
 									"resUserName": user,
@@ -224,22 +175,12 @@ io.on("connection",function(socket){
 							}
 							else
 							{
-								console.log("Check account not in SQL");
-								if(NumberOfUser == 1)
-								{
-									Player1_Login_Fail = true;
-								}
-								if(NumberOfUser == 2)
-								{
-									Player2_Login_Fail = true;
-								}
 								socket.emit("Server_Login_Fail");
 								//console.log("tai khoan pass sai");
-							}
+                            }
 						}
 						});
 					}
-				}
 			});
 			break;
         case "Register":
@@ -264,14 +205,6 @@ io.on("connection",function(socket){
                 }
             });
             });
-			if(NumberOfUser == 1)
-			{
-			NumberOfUser = 0;
-			}
-			if(NumberOfUser == 2)
-			{
-				NumberOfUser = 1;
-			}
             break;
         }
 });
@@ -318,20 +251,41 @@ io.on("connection",function(socket){
 		console.log(JSON.stringify(status));
 	});
     socket.on("disconnect",function(){
-      console.log("co nguoi ngat ket noi "+ socket.id);
-//	  console.log("Number of user is: " + NumberOfUser);
-//	  console.log("Player 1 : " + Player1_Login_Fail + '  Player 2 :' + Player2_Login_Fail);
-	  if(Player1_Login_Fail == true) 
-	  {
-		  NumberOfUser = 1;
-		  Player1_Login_Fail = false;
-	  }
-	  if(Player2_Login_Fail == true)
-	  {
-		  NumberOfUser = 1;
-		  Player2_Login_Fail = false;
-	  }
-//	  	  console.log("Number of user is 2: " + NumberOfUser);
+      console.log("Disconnect "+ socket.id);
+        for(var i = 0; i < __IndexOfArr; i++)
+        {
+			console.log("Status of current disconnect: " + AfterLogin_Status_Arr[i + 1]);
+            if((socket.id == Login_SocketID_Arr[i + 1]) && (AfterLogin_Status_Arr[i+1] == true))
+            {
+				console.log("Only run when disconnect appear at selectRemote page!!");
+				if(__IndexOfArr == 0)
+				{
+					User_Name_Arr = null;
+					console.log("User: " + User_Name_Arr[i]);
+					return 1;
+				}
+                for(var j = i; i < __IndexOfArr; i++)
+                {
+                    for(var u = j+1; u <__IndexOfArr;u++)
+                    {
+                        User_Name_Arr[j] = User_Name_Arr[u];
+                    }
+                }
+				for(var j = i; i < __IndexOfArr; i++)
+                {
+                    for(var u = j+1; u <__IndexOfArr;u++)
+                    {
+                        AfterLogin_Status_Arr[j] = AfterLogin_Status_Arr[u];
+                    }
+                }
+				__IndexOfArr--;
+            }
+        }
+		for(var i = 0 ;i< __IndexOfArr;i++)
+		{
+			console.log("User: " + User_Name_Arr[i] + "  ");
+		}
+	  
       if(socket.Phong=="1"){
 		  console.log ("ngat ket noi gamepad 1")
         check_game_pad_1 = true;
@@ -358,7 +312,7 @@ io.on("connection",function(socket){
 	  if(data== 'cancle')
 		  io.sockets.in(socket.Phong).emit("Server_Commands",'g');
 
-    console.log("nut bam : "+ data);
+        console.log("nut bam : "+ data);
   });
 
   socket.on("Client_Select_Gamepad",function(data){
