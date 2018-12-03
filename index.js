@@ -119,9 +119,9 @@ io.on("connection",function(socket){
 						{
 							socket.emit("Server_Login_Fail");
 						}
-					else 
+					else
 					{
-						//console.log("check account!");		
+						//console.log("check account!");
 						//console.log("da chay vo dong 69");
 						db.query("SELECT * FROM users WHERE Username=?", [user], function(err, rows, fields){
 						if(rows.length == 0)
@@ -165,7 +165,7 @@ io.on("connection",function(socket){
 								for (; str.length < 32; str += Math.random().toString(36).substr(2));
                                 var SessionKey = str.substr(0, 32);
                                 saveSessionKey = SessionKey;
-								var saveCookie = 
+								var saveCookie =
 								{
 									"resUserName": user,
 									"resSessionkey": SessionKey
@@ -285,7 +285,7 @@ io.on("connection",function(socket){
 		{
 			console.log("User: " + User_Name_Arr[i] + "  ");
 		}
-	  
+
       if(socket.Phong=="1"){
 		  console.log ("ngat ket noi gamepad 1")
         check_game_pad_1 = true;
@@ -320,13 +320,13 @@ io.on("connection",function(socket){
 		  check_game_pad_1 = true;
 	  else if (data == 2)
 		  check_game_pad_2 = true;
-	  
+
 	  var status = {
 			"status1": check_game_pad_1,
 			"status2": check_game_pad_2
 		};
 	  io.sockets.emit("Sever_Gamepad_Status",status);
-	   
+
       console.log("Selected GamePad " + data);
       socket.join(data);
       check_room = data;
@@ -374,7 +374,7 @@ io.on("connection",function(socket){
 		console.log("2 shot 1")
 	  io.sockets.in('1').emit("Server_WereShot",data);
 	}
-      
+
   })
   socket.on("Client_Shot_Result",function(data){
     //row= data.row;
@@ -395,7 +395,7 @@ io.on("connection",function(socket){
 		  io.sockets.emit("Server_SwitchRole")
 		  check_timeout = 0;
 		  }
-		  
+
   })
 
 	socket.on("Client_Hit_Vibration",function(data)
@@ -454,3 +454,52 @@ app.get("/selectRemote", function(req, res){
 app.get("/register", function(req, res){
   res.render("register");
 });
+
+function Create_New_table()
+{
+  var sql = "CREATE TABLE client (Username VARCHAR(255), Password VARCHAR(255),Status INT,Session VARCHAR(32))";
+  db.query(sql, function (err, result) {
+    if (err) throw err;
+    console.log("Table created");
+  });
+});
+}
+
+function Login(username, pass)
+{
+  db.query("SELECT * FROM client WHERE Username=? AND Password=? ", [username,pass], function(err, rows, fields){
+    if(rows.length == 0){
+        return false
+    }
+    // ham tao session chua co,
+
+    var Session = CreateSessionKey()
+  db.query("UPDATE client SET Session = ? WHERE Username = ?", [Session,username], function(err, rows, fields){
+   if (error) throw error;
+    return true
+}
+function GetSeasion(username)
+{
+  db.query("SELECT Session FROM client WHERE Username=?", [username], function(err, rows, fields){
+    if(rows.length == 0){
+        return null
+    }
+    return rows[0]
+}
+function CompairSession(session)
+{
+
+  db.query("SELECT Session FROM client ", function(err, rows, fields){
+    if(rows.length == 0){
+        return false
+    }
+    return true
+}
+function CreateSessionKey()
+{
+  var str = "";
+  for (; str.length < 32; str += Math.random().toString(36).substr(2));
+                  var SessionKey = str.substr(0, 32);
+                  //saveSessionKey = SessionKey;
+            return   SessionKey
+}
