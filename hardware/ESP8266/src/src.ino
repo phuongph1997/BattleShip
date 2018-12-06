@@ -82,7 +82,7 @@ void loop() {
         case "EndGame":
             Serial.write("Long_Vibra");
         break;
-        case default:
+        default:
         break;
       }
     })

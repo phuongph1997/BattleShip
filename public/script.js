@@ -120,7 +120,6 @@ socket.on("Server_Shot_Result", function(data){
   if (data){
     // Emit to ESP8266 that HIT true ship, then turn on the vibration
 
-    socket.emit("Client_Hit_Vibration","Hit");
     $(CurrentID).addClass('hit');
     $('#left #hits').html("Hits: &nbsp;&nbsp;&nbsp;&nbsp; " + $('#right .bomb.hit').length);
     Timer_Off()
@@ -130,6 +129,7 @@ socket.on("Server_Shot_Result", function(data){
     //Switch_Turn()
   // check if you win the game
   if ( $('#right .bomb.hit').length == ships.reduce(getSum)){
+	socket.emit("Client_End_Game");
     state = states.ENDGAME
     $("#win").removeClass('hidden')
   }

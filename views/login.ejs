@@ -10,6 +10,15 @@
 
 <script>
     var socket = io.connect('18.136.212.75');
+	
+	var serverCheck = {
+            "type": "Login",
+			"username": getCookie("username"),
+            "cookie": getCookie("seasion")
+        }
+	//alert("Send login emit!");
+	socket.emit("from",serverCheck);
+	
     socket.on("Server_Login_Fail",function(){
         alert("Login fail!");
         window.location.href = './login';
@@ -24,13 +33,7 @@
         window.location.href = './selectRemote';
     })
     $(document).ready(function(){
-        var serverCheck = {
-            "type": "Login",
-			"username": $("#loginusername").val(),
-            "cookie": {}
-        }
-        // alert("Send login emit!");
-        socket.emit("from",serverCheck);
+        //alert("ready alert!");
         
         var pressed_enter = document.getElementById("loginpassword");
         pressed_enter.addEventListener("keyup",function(e)
@@ -50,6 +53,17 @@
         window.location.href = './register';
 });
 });
+function getCookie(name) {
+        var nameEQ = name + "=";
+        //alert(document.cookie);
+        var ca = document.cookie.split(';');
+        for (var i = 0; i < ca.length; i++) {
+            var c = ca[i];
+            while (c.charAt(0) == ' ') c = c.substring(1);
+            if (c.indexOf(nameEQ) != -1) return c.substring(nameEQ.length, c.length);
+        }
+        return null;
+    }
 </script>
 <style>
 * {

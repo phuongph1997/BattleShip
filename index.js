@@ -1,7 +1,9 @@
 var express = require("express");
 var cookieParser = require('cookie-parser');
-var session = require('express-session');
+//var session = require('express-session');
 var mysql = require('mysql');
+//var async = require("async");
+var util = require('util')
 
 var app = express();
 var server = require("http").Server(app);
@@ -26,7 +28,11 @@ var db = mysql.createConnection({
 db.connect(function(err) {
     if (err) throw err;
     console.log("mysql Connected!");
+    Create_New_table()
 });
+
+db.query_promise = util.promisify(db.query)
+module.exports = db
 app.use(express.static("public"));
 app.set("view engine", "ejs");
 app.set("views", "./views")
@@ -52,32 +58,38 @@ io.on("connection", function(socket) {
     socket.on("from", function(msg) {
         //console.log("Page type is: " + msg.type);
 
-        socket.username = CompairSession(msg.cookie)
+        console.log("cookie: " + msg.cookie)
         socket.player = true
-
-        switch (msg.type) {
-            case "Index":
-                HandlerIndexPage(socket, msg)
-                break;
-            case "selectRemote":
-                HandlerSelectremotePage(socket, msg)
-                break;
-            case "Login":
-                HandlerLoginPage(socket, msg)
-                break;
-            case "Register":
-                HandlerRegisterPage(socket, msg)
-                break;
-            default:
-                break;
-        }
+        CompairSession(msg.cookie, socket)
+            .then(() => {
+                switch (msg.type) {
+                    case "Index":
+                        HandlerIndexPage(socket, msg)
+                        break;
+                    case "selectRemote":
+                        HandlerSelectremotePage(socket, msg)
+                        break;
+                    case "Login":
+                        HandlerLoginPage(socket, msg)
+                        break;
+                    case "Register":
+                        HandlerRegisterPage(socket, msg)
+                        break;
+                    default:
+                        break;
+                }
+                console.log("socket.name : " + socket.username)
+            })
     });
 
     socket.on("disconnect", function() {
-        if (socket.player)
-            console.log(socket.user + " Change page/ reload");
-        else {
+        console.log("socket.player: " + socket.player)
+        if (socket.player == true)
+            console.log(socket.username + " Change page/ reload");
+        else if (socket.player == false)
             console.log("tay cam " + socket.Phong + " ngat ket noi")
+        else if (socket.player == undefined) {
+            console.log("nguoi dung chua dang nhap ngat ket noi")
         }
 
         for (var i = 0; i < __IndexOfArr; i++) {
@@ -120,6 +132,40 @@ io.on("connection", function(socket) {
 
 
 
+    /********************************************
+     ********select gamepad related socket*******
+     ********************************************/
+    socket.on("Client_Gamepad_Status", function() {
+        //console.log("Transfering Page!\r\n");
+        console.log("client_gamepad status")
+        var status = {
+            "status1": check_game_pad_1,
+            "status2": check_game_pad_2
+        };
+        socket.emit("Server_Gamepad_Status", status);
+        console.log(JSON.stringify(status));
+    });
+
+    socket.on("Client_Select_Gamepad", function(data) {
+        if (data == 1)
+            check_game_pad_1 = true;
+        else if (data == 2)
+            check_game_pad_2 = true;
+
+        var status = {
+            "status1": check_game_pad_1,
+            "status2": check_game_pad_2
+        };
+        io.sockets.emit("Server_Gamepad_Status", status);
+
+        console.log("Selected GamePad " + data);
+        socket.join(data);
+        check_room = data;
+    });
+    /************************************************************************/
+
+    
+
     /**************************************
      ********Gamepad related socket*******
      **************************************/
@@ -159,7 +205,7 @@ io.on("connection", function(socket) {
             "status2": check_game_pad_2
         };
         console.log("Nguoi choi da ket noi: ", socket.Phong)
-        io.sockets.emit("Sever_Gamepad_Status", status);
+        io.sockets.emit("Server_Gamepad_Status", status);
         //console.log ("emit Server_Gamepad_status to everyone")
         console.log(JSON.stringify(status));
     });
@@ -180,23 +226,6 @@ io.on("connection", function(socket) {
             io.sockets.in(socket.Phong).emit("Server_Commands", 'g');
 
         console.log("nut bam : " + data);
-    });
-
-    socket.on("Client_Select_Gamepad", function(data) {
-        if (data == 1)
-            check_game_pad_1 = true;
-        else if (data == 2)
-            check_game_pad_2 = true;
-
-        var status = {
-            "status1": check_game_pad_1,
-            "status2": check_game_pad_2
-        };
-        io.sockets.emit("Sever_Gamepad_Status", status);
-
-        console.log("Selected GamePad " + data);
-        socket.join(data);
-        check_room = data;
     });
     /************************************************************************/
 
@@ -233,6 +262,7 @@ io.on("connection", function(socket) {
             check_timeout = 0;
         }
     })
+
     socket.on("Client_Shot", function(data) {
         console.log("Client shot receive : " + data)
         if (turn == 1) {
@@ -305,20 +335,11 @@ function HandlerIndexPage(socket, msg) {
 }
 
 function HandlerSelectremotePage(socket, msg) {
-    // console.log("Save: " + saveSessionKey );
-    // console.log("Client: " + msg.cookie );
+    //console.log(socket.username)
     if (socket.username != null) {
-        socket.on("Client_Gamepad_Status", function() {
-            //console.log("Transfering Page!\r\n");
-            var status = {
-                "status1": check_game_pad_1,
-                "status2": check_game_pad_2
-            };
-            socket.emit("Sever_Gamepad_Status", status);
-            console.log(JSON.stringify(status));
-        });
+
     } else {
-        console.log("undefined player at index, kick it out");
+        console.log("undefined player at selectRemote, kick it out");
         socket.emit("Cookie_Fail");
     }
 }
@@ -326,23 +347,9 @@ function HandlerSelectremotePage(socket, msg) {
 function HandlerLoginPage(socket, msg) {
     socket.on("Client_Login", function(data) {
         //console.log("Login!!");
-        user = data.user,
-            pass = data.pass;
-        if ((!user) || (!pass)) {
-            socket.emit("Server_Login_Fail");
-        } else {
-            SessionKey = Login(user, pass)
-            if (SessionKey == null) {
-                socket.emit("Server_Login_Fail");
-            } else {
-                var saveCookie = {
-                    "resUserName": user,
-                    "resSessionkey": SessionKey
-                };
-                console.log("Cookie Created:  " + SessionKey);
-                socket.emit("Server_Login_Sucess", saveCookie);
-            }
-        }
+        user = data.user;
+        pass = data.pass;
+        Login(user, pass, socket)
     });
 }
 
@@ -351,20 +358,48 @@ function HandlerRegisterPage(socket, msg) {
         user = data.username;
         pass = data.password;
 
-        if (Register(user, pass)) {
-            console.log("register suscess");
-            socket.emit("Sign_Up_Successfully");
-        } else {
-            socket.emit("Sign_Up_fail");
-        }
+        Register(user, pass, socket)
     });
 }
-
 
 function randomNumber() {
     var number = Math.random()
     console.log("random number : " + number)
     return (number > 0.5) ? 1 : 0;
+}
+
+function LoginSuccess(username, pass, socket) {
+    console.log(username + " login success")
+    var SessionKey = CreateSessionKey()
+    db.query("UPDATE client SET Session = ?,Status=? WHERE Username = ?", [SessionKey, 1, username], function(err, rows, fields) {
+        if (err) throw err;
+    })
+    var saveCookie = {
+        "resUserName": user,
+        "resSessionkey": SessionKey
+    };
+    console.log("Cookie Created:  " + SessionKey);
+    socket.emit("Server_Login_Sucess", saveCookie);
+}
+
+function LoginFail(username, socket) {
+    console.log(username + " login fail")
+    socket.emit("Server_Login_Fail");
+}
+
+function RegisterSuccess(username, socket) {
+    db.query("INSERT INTO client(Username,Password) VALUES(?, ?)", [username, pass], function(err, rows, fields) {
+        if (err) throw err;
+        console.log("add user " + username)
+        console.log("register suscess");
+        socket.emit("Sign_Up_Successfully")
+    })
+}
+
+function RegisterFail(username, socket) {
+    console.log("user allready exist")
+    console.log("registr fail");
+    socket.emit("Sign_Up_fail");
 }
 /*********************************************************/
 
@@ -400,59 +435,61 @@ app.get("/register", function(req, res) {
  ***Database helper function***
  ******************************/
 
+db.on('error', function(err) {
+    console.log("[mysql error]", err);
+});
+
 function Create_New_table() {
-    var sql = "CREATE TABLE client (Username VARCHAR(255), Password VARCHAR(255),Status INT,Session VARCHAR(32),GamePad INT )";
+    var sql = "CREATE TABLE IF NOT EXISTS client (Username VARCHAR(255), Password VARCHAR(255),Status INT DEFAULT 0,Session VARCHAR(32),GamePad INT )";
     db.query(sql, function(err, result) {
         if (err) throw err;
-        console.log("Table created");
+        //console.log(result)
+        //console.log("Table created");
     });
 
 }
 
-function Login(username, pass) {
-    db.query("SELECT * FROM client WHERE Username=? AND Password=? AND Status=? ", [username, pass, 0], function(err, rows, fields) {
+function Login(username, pass, socket) {
+    console.log("username: " + username + " ,pass: " + pass)
+    db.query("SELECT * FROM client WHERE Username=? AND Password=? AND Status=?", [username, pass, 0], function(err, rows, fields) {
+        if (err) throw err;
+        console.log(rows)
         if (rows.length == 0) {
-            return false
+            LoginFail(username, socket)
+        } else {
+            LoginSuccess(username, pass, socket)
         }
-    })
-    // ham tao session chua co,
-
-    var Session = CreateSessionKey()
-    db.query("UPDATE client SET Session = ?,Status=? WHERE Username = ?", [Session, 1, username], function(err, rows, fields) {
-        if (error) throw error;
-
-        return true
     })
 }
 
-function Register(username, pass) {
-    db.query("SELECT * FROM client WHERE Username=? ", [username], function(err, rows, fields) {
-        if (rows.length != 0) {
-            return false
+function Register(username, pass, socket) {
+    db.query("SELECT * FROM client WHERE Username=?", [username], function(err, rows, fields) {
+        if (err) throw err;
+        console.log("length " + rows.length)
+        if (rows.length == 0) {
+            RegisterSuccess(username, socket)
+        } else {
+            RegisterFail(username, socket)
         }
-    })
-
-    db.query("INSERT INTO client(Username,Password) VALUES(?, ?)", [username, pass], , function(err, rows, fields) {
-        if (error) throw error;
-        return true
     })
 }
 
 function LogOut(username) {
     db.query("UPDATE client SET Status=? WHERE Username = ?", [0, username], function(err, rows, fields) {
-        if (error) throw error;
+        if (err) throw err;
         console.log("Number of records deleted: " + rows.affectedRows);
+        console.log(username + " logout")
     })
 }
 
-function CompairSession(session) {
-
-    db.query("SELECT * FROM client ", function(err, rows, fields) {
-        if (rows.length == 0) {
-            return null
-        }
-        return rows[0].Username
-    })
+async function CompairSession(session, socket) {
+    var a = await db.query_promise("SELECT * FROM client ")
+    console.log(a)
+    if (a.length == 0)
+        socket.username = null
+    else
+        socket.username = a[0].Username
+    socket.player = true
 }
 
 function CreateSessionKey() {
@@ -462,5 +499,13 @@ function CreateSessionKey() {
     return SessionKey
 }
 
-
+// , function(err, rows, fields) {
+//         if (err) throw err;
+//         if (rows.length == 0) {
+//             socket.username = null
+//         }else{
+//             console.log("user login")
+//             socket.username = rows[0].Username
+//         }
+//     })
 /***********************************************************************/
