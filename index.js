@@ -40,11 +40,11 @@ app.set("views", "./views")
 server.listen(80);
 var check_game_pad_1 = true;
 var check_game_pad_2 = true;
-var check_room_1;
-var check_room_2;
 var check_ready = 0;
 var check_timeout = 0;
 var turn;
+
+var UserSession = new Map()
 // socket.on("Get_All_Remote_Status", function(){
 
 // })
@@ -78,12 +78,12 @@ io.on("connection", function(socket) {
                     default:
                         break;
                 }
-                console.log("socket.name : " + socket.username)
+                //console.log("socket.name : " + socket.username)
             })
     });
 
     socket.on("disconnect", function() {
-        console.log("socket.player: " + socket.player)
+        //console.log("socket.player: " + socket.player)
         if (socket.player == true)
             console.log(socket.username + " Change page/ reload");
         else if (socket.player == false)
@@ -127,6 +127,8 @@ io.on("connection", function(socket) {
                 check_game_pad_2 = true;
             }
         }
+
+        console.log()
     });
     /************************************************************************/
 
@@ -137,7 +139,6 @@ io.on("connection", function(socket) {
      ********************************************/
     socket.on("Client_Gamepad_Status", function() {
         //console.log("Transfering Page!\r\n");
-        console.log("client_gamepad status")
         var status = {
             "status1": check_game_pad_1,
             "status2": check_game_pad_2
@@ -164,7 +165,7 @@ io.on("connection", function(socket) {
     });
     /************************************************************************/
 
-    
+
 
     /**************************************
      ********Gamepad related socket*******
@@ -327,7 +328,7 @@ function HandlerIndexPage(socket, msg) {
         console.log("undefined player at index, kick it out")
         socket.emit("Cookie_Fail");
     } else
-        console.log("undefined player at index")
+        console.log(socket.username + " player at index")
 
     socket.join(check_room);
     console.log("Connect GamePad: " + check_room);
@@ -337,7 +338,7 @@ function HandlerIndexPage(socket, msg) {
 function HandlerSelectremotePage(socket, msg) {
     //console.log(socket.username)
     if (socket.username != null) {
-
+        console.log(socket.username + " player at select remote")
     } else {
         console.log("undefined player at selectRemote, kick it out");
         socket.emit("Cookie_Fail");
@@ -345,6 +346,15 @@ function HandlerSelectremotePage(socket, msg) {
 }
 
 function HandlerLoginPage(socket, msg) {
+    if (socket.username != null) {
+        var saveCookie = {
+            "resUserName": socket.username,
+            "resSessionkey": UserSession.get(socket.username)
+        };
+        socket.emit("Server_Login_Sucess", saveCookie);
+        return
+    }
+
     socket.on("Client_Login", function(data) {
         //console.log("Login!!");
         user = data.user;
@@ -371,15 +381,16 @@ function randomNumber() {
 function LoginSuccess(username, pass, socket) {
     console.log(username + " login success")
     var SessionKey = CreateSessionKey()
-    db.query("UPDATE client SET Session = ?,Status=? WHERE Username = ?", [SessionKey, 1, username], function(err, rows, fields) {
-        if (err) throw err;
-    })
     var saveCookie = {
         "resUserName": user,
         "resSessionkey": SessionKey
     };
     console.log("Cookie Created:  " + SessionKey);
+    UserSession.set(username, SessionKey)
+
     socket.emit("Server_Login_Sucess", saveCookie);
+
+    console.log(UserSession)
 }
 
 function LoginFail(username, socket) {
@@ -408,20 +419,42 @@ function RegisterFail(username, socket) {
 /******************************
  ********HTTP GET handler*******
  ******************************/
-app.get("/", function(req, res) {
-    res.render("login");
-});
+function CheckSession(session) {
+    for (const v of UserSession.values()) {
+        if (v.localeCompare(session) == 0) {
+            console.log("change page")
+            return true
+        }
+    }
+    return false
+}
 
-app.get("/index", function(req, res) {
-    res.render("index");
+app.get("/", function(req, res) {
+    if (CheckSession(req.cookies.seasion)) {
+        res.redirect('/selectRemote')
+    } else
+        res.render("login");
 });
 
 app.get("/login", function(req, res) {
-    res.render("login");
+    if (CheckSession(req.cookies.seasion)) {
+        res.redirect('/selectRemote')
+    } else
+        res.render("login");
+});
+
+app.get("/index", function(req, res) {
+	if (CheckSession(req.cookies.seasion)) {
+        res.render("index");
+    } else
+        res.redirect('/login')
 });
 
 app.get("/selectRemote", function(req, res) {
-    res.render("selectRemote");
+    if (CheckSession(req.cookies.seasion)) {
+        res.render("selectRemote");
+    } else
+        res.redirect('/login')
 });
 
 app.get("/register", function(req, res) {
@@ -440,7 +473,7 @@ db.on('error', function(err) {
 });
 
 function Create_New_table() {
-    var sql = "CREATE TABLE IF NOT EXISTS client (Username VARCHAR(255), Password VARCHAR(255),Status INT DEFAULT 0,Session VARCHAR(32),GamePad INT )";
+    var sql = "CREATE TABLE IF NOT EXISTS client (Username VARCHAR(255), Password VARCHAR(255), GamePad INT )";
     db.query(sql, function(err, result) {
         if (err) throw err;
         //console.log(result)
@@ -450,22 +483,27 @@ function Create_New_table() {
 }
 
 function Login(username, pass, socket) {
-    console.log("username: " + username + " ,pass: " + pass)
-    db.query("SELECT * FROM client WHERE Username=? AND Password=? AND Status=?", [username, pass, 0], function(err, rows, fields) {
-        if (err) throw err;
-        console.log(rows)
-        if (rows.length == 0) {
-            LoginFail(username, socket)
-        } else {
-            LoginSuccess(username, pass, socket)
-        }
-    })
+    console.log(UserSession.get(username))
+    if (UserSession.get(username) == undefined)
+        db.query("SELECT * FROM client WHERE Username=? AND Password=?", [username, pass], function(err, rows, fields) {
+            if (err) throw err;
+            if (rows.length == 0) {
+                console.log("wrong username or pass")
+                LoginFail(username, socket)
+            } else {
+                LoginSuccess(username, pass, socket)
+            }
+        })
+    else {
+        console.log("user allready login")
+        LoginFail(username, socket)
+    }
 }
 
 function Register(username, pass, socket) {
     db.query("SELECT * FROM client WHERE Username=?", [username], function(err, rows, fields) {
         if (err) throw err;
-        console.log("length " + rows.length)
+        //console.log("length " + rows.length)
         if (rows.length == 0) {
             RegisterSuccess(username, socket)
         } else {
@@ -475,21 +513,21 @@ function Register(username, pass, socket) {
 }
 
 function LogOut(username) {
-    db.query("UPDATE client SET Status=? WHERE Username = ?", [0, username], function(err, rows, fields) {
-        if (err) throw err;
-        console.log("Number of records deleted: " + rows.affectedRows);
-        console.log(username + " logout")
-    })
+    console.log(username + " logout")
+    UserSession.delete(username)
+    console.log(UserSession)
 }
 
 async function CompairSession(session, socket) {
-    var a = await db.query_promise("SELECT * FROM client ")
-    console.log(a)
-    if (a.length == 0)
-        socket.username = null
-    else
-        socket.username = a[0].Username
-    socket.player = true
+    socket.username = null
+    for (const [k, v] of UserSession.entries()) {
+        if (v.localeCompare(session) == 0) {
+            socket.username = k
+            break
+        }
+    }
+
+    console.log(UserSession)
 }
 
 function CreateSessionKey() {
