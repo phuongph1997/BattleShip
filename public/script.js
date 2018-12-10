@@ -22,6 +22,7 @@ var opponent_done = true;
 var turn = false;
 var time = 0;
 var timer ;
+var shotLocation = 0 ;
 
 // handle socket event
 var socket = io.connect("18.136.212.75")
@@ -94,7 +95,7 @@ socket.on("Server_WereShot", function(data){
   $(PlayerID).addClass('bomb')
   $('#right #shots').html("Shots: &nbsp; " + $('#left .bomb').length);
   if (player1array[row][column]){
-	  console ("true ")
+	  console.log ("true ")
     $(PlayerID).addClass('hit')
     $('#right #hits').html("Hits: &nbsp;&nbsp;&nbsp;&nbsp; " + $('#left .bomb.hit').length);
   } else {
@@ -111,7 +112,8 @@ socket.on("Server_WereShot", function(data){
 
 // socket event receive shot result
 socket.on("Server_Shot_Result", function(data){
-  let CurrentID = '#'+selectedPoint+'-2';
+
+  let CurrentID = '#'+shotLocation+'-2';
   $(CurrentID).addClass('bomb');
 
   console.log("Server_Shot_Result " + data)
@@ -137,6 +139,7 @@ socket.on("Server_Shot_Result", function(data){
 
 function Shoot(){
   // socket event emit Client_Shot
+  shotLocation = selectedPoint
   let X = parseInt(selectedPoint%10);
   let Y = parseInt(selectedPoint/10);
   let CurrentID = '#'+selectedPoint+'-2';

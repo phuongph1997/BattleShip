@@ -3,7 +3,7 @@ var cookieParser = require('cookie-parser');
 //var session = require('express-session');
 var mysql = require('mysql');
 //var async = require("async");
-var util = require('util')
+//var util = require('util')
 
 var app = express();
 var server = require("http").Server(app);
@@ -31,8 +31,8 @@ db.connect(function(err) {
     Create_New_table()
 });
 
-db.query_promise = util.promisify(db.query)
-module.exports = db
+//db.query_promise = util.promisify(db.query)
+//module.exports = db
 app.use(express.static("public"));
 app.set("view engine", "ejs");
 app.set("views", "./views")
@@ -40,6 +40,7 @@ app.set("views", "./views")
 server.listen(80);
 var check_game_pad_1 = true;
 var check_game_pad_2 = true;
+var check_room = 0;
 var check_ready = 0;
 var check_timeout = 0;
 var turn;
@@ -61,25 +62,23 @@ io.on("connection", function(socket) {
         console.log("cookie: " + msg.cookie)
         socket.player = true
         CompairSession(msg.cookie, socket)
-            .then(() => {
-                switch (msg.type) {
-                    case "Index":
-                        HandlerIndexPage(socket, msg)
-                        break;
-                    case "selectRemote":
-                        HandlerSelectremotePage(socket, msg)
-                        break;
-                    case "Login":
-                        HandlerLoginPage(socket, msg)
-                        break;
-                    case "Register":
-                        HandlerRegisterPage(socket, msg)
-                        break;
-                    default:
-                        break;
-                }
-                //console.log("socket.name : " + socket.username)
-            })
+        switch (msg.type) {
+            case "Index":
+                HandlerIndexPage(socket, msg)
+                break;
+            case "selectRemote":
+                HandlerSelectremotePage(socket, msg)
+                break;
+            case "Login":
+                HandlerLoginPage(socket, msg)
+                break;
+            case "Register":
+                HandlerRegisterPage(socket, msg)
+                break;
+            default:
+                break;
+        }
+        //console.log("socket.name : " + socket.username)
     });
 
     socket.on("disconnect", function() {
@@ -152,7 +151,10 @@ io.on("connection", function(socket) {
             check_game_pad_1 = true;
         else if (data == 2)
             check_game_pad_2 = true;
-
+		else if (data == 3){
+			data = 2
+			check_game_pad_2 = true
+		}
         var status = {
             "status1": check_game_pad_1,
             "status2": check_game_pad_2
@@ -444,7 +446,7 @@ app.get("/login", function(req, res) {
 });
 
 app.get("/index", function(req, res) {
-	if (CheckSession(req.cookies.seasion)) {
+    if (CheckSession(req.cookies.seasion)) {
         res.render("index");
     } else
         res.redirect('/login')
@@ -518,7 +520,7 @@ function LogOut(username) {
     console.log(UserSession)
 }
 
-async function CompairSession(session, socket) {
+function CompairSession(session, socket) {
     socket.username = null
     for (const [k, v] of UserSession.entries()) {
         if (v.localeCompare(session) == 0) {
@@ -526,7 +528,6 @@ async function CompairSession(session, socket) {
             break
         }
     }
-
     console.log(UserSession)
 }
 
