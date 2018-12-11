@@ -8,5 +8,7 @@
 .\objects\main.o: ..\Nuvoton\NUC140BSP\NuvotonPlatform_Keil\Include\System\SysInfra.h
 .\objects\main.o: ..\Nuvoton\NUC140BSP\NuvotonPlatform_Keil\Include\System\ModuleID.h
 .\objects\main.o: ..\Nuvoton\NUC140BSP\NuvotonPlatform_Keil\Include\Driver\DrvUART.h
+.\objects\main.o: ..\Nuvoton\NUC140BSP\NuvotonPlatform_Keil\Include\Driver\DrvTIMER.h
 .\objects\main.o: ..\Nuvoton\NUC140BSP\NuvotonPlatform_Keil\Include\Driver\DrvGPIO.h
 .\objects\main.o: ..\Nuvoton\NUC140BSP\NuvotonPlatform_Keil\Include\Driver\DrvSYS.h
+.\objects\main.o: ..\Nuvoton\NUC140BSP\NuvotonPlatform_Keil\Include\Driver\DrvPWM.h

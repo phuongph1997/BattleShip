@@ -1,9 +1,9 @@
 <!doctype html public "-//w3c//dtd html 4.0 transitional//en">
 <html><head>
-<title>Static Call Graph - [.\Objects\NUC140_Code.axf]</title></head>
+<title>Static Call Graph - [.\Objects\test.axf]</title></head>
 <body><HR>
-<H1>Static Call Graph for image .\Objects\NUC140_Code.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060061: Last Updated: Tue Dec 04 12:30:54 2018
+<H1>Static Call Graph for image .\Objects\test.axf</H1><HR>
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060061: Last Updated: Sat Dec 08 21:29:00 2018
 <BR><P>
 <H3>Maximum Stack Usage =        104 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -59,14 +59,14 @@ Function Pointers
  <LI><a href="#[a]">SysTick_Handler</a> from startup_nuc1xx.o(.text) referenced from startup_nuc1xx.o(RESET)
  <LI><a href="#[29]">SystemInit</a> from system_nuc1xx.o(i.SystemInit) referenced from startup_nuc1xx.o(.text)
  <LI><a href="#[13]">TMR0_IRQHandler</a> from nuc_config.o(i.TMR0_IRQHandler) referenced from startup_nuc1xx.o(RESET)
- <LI><a href="#[14]">TMR1_IRQHandler</a> from startup_nuc1xx.o(.text) referenced from startup_nuc1xx.o(RESET)
- <LI><a href="#[15]">TMR2_IRQHandler</a> from startup_nuc1xx.o(.text) referenced from startup_nuc1xx.o(RESET)
- <LI><a href="#[16]">TMR3_IRQHandler</a> from startup_nuc1xx.o(.text) referenced from startup_nuc1xx.o(RESET)
+ <LI><a href="#[14]">TMR1_IRQHandler</a> from drvtimer.o(i.TMR1_IRQHandler) referenced from startup_nuc1xx.o(RESET)
+ <LI><a href="#[15]">TMR2_IRQHandler</a> from drvtimer.o(i.TMR2_IRQHandler) referenced from startup_nuc1xx.o(RESET)
+ <LI><a href="#[16]">TMR3_IRQHandler</a> from drvtimer.o(i.TMR3_IRQHandler) referenced from startup_nuc1xx.o(RESET)
  <LI><a href="#[17]">UART02_IRQHandler</a> from drvuart.o(i.UART02_IRQHandler) referenced from startup_nuc1xx.o(RESET)
  <LI><a href="#[18]">UART1_IRQHandler</a> from drvuart.o(i.UART1_IRQHandler) referenced from startup_nuc1xx.o(RESET)
  <LI><a href="#[2b]">UART_INT_HANDLE</a> from nuc_config.o(i.UART_INT_HANDLE) referenced from nuc_config.o(i.ESP_config)
  <LI><a href="#[21]">USBD_IRQHandler</a> from startup_nuc1xx.o(.text) referenced from startup_nuc1xx.o(RESET)
- <LI><a href="#[c]">WDT_IRQHandler</a> from startup_nuc1xx.o(.text) referenced from startup_nuc1xx.o(RESET)
+ <LI><a href="#[c]">WDT_IRQHandler</a> from drvtimer.o(i.WDT_IRQHandler) referenced from startup_nuc1xx.o(RESET)
  <LI><a href="#[2e]">__main</a> from __main.o(!!!main) referenced from startup_nuc1xx.o(.text)
  <LI><a href="#[2c]">vibration</a> from main.o(i.vibration) referenced from main.o(i.main)
 </UL>
@@ -75,8 +75,8 @@ Function Pointers
 Global Symbols
 </H3>
 <P><STRONG><a name="[2e]"></a>__main</STRONG> (Thumb, 8 bytes, Stack size 0 bytes, __main.o(!!!main))
-<BR><BR>[Calls]<UL><LI><a href="#[30]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__scatterload
-<LI><a href="#[31]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__rt_entry
+<BR><BR>[Calls]<UL><LI><a href="#[31]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__rt_entry
+<LI><a href="#[30]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__scatterload
 </UL>
 
 <P><STRONG><a name="[30]"></a>__scatterload</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, __scatter.o(!!!scatter))
@@ -164,8 +164,8 @@ Global Symbols
 <P><STRONG><a name="[78]"></a>__rt_lib_shutdown_user_alloc_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, libshutdown2.o(.ARM.Collect$$libshutdown$$0000000C))
 
 <P><STRONG><a name="[31]"></a>__rt_entry</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, __rtentry.o(.ARM.Collect$$rtentry$$00000000))
-<BR><BR>[Called By]<UL><LI><a href="#[32]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__scatterload_rt2
-<LI><a href="#[2e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__main
+<BR><BR>[Called By]<UL><LI><a href="#[2e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__main
+<LI><a href="#[32]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__scatterload_rt2
 </UL>
 
 <P><STRONG><a name="[79]"></a>__rt_entry_presh_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, __rtentry2.o(.ARM.Collect$$rtentry$$00000002))
@@ -289,19 +289,7 @@ Global Symbols
 <P><STRONG><a name="[1c]"></a>SPI3_IRQHandler</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, startup_nuc1xx.o(.text))
 <BR>[Address Reference Count : 1]<UL><LI> startup_nuc1xx.o(RESET)
 </UL>
-<P><STRONG><a name="[14]"></a>TMR1_IRQHandler</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, startup_nuc1xx.o(.text))
-<BR>[Address Reference Count : 1]<UL><LI> startup_nuc1xx.o(RESET)
-</UL>
-<P><STRONG><a name="[15]"></a>TMR2_IRQHandler</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, startup_nuc1xx.o(.text))
-<BR>[Address Reference Count : 1]<UL><LI> startup_nuc1xx.o(RESET)
-</UL>
-<P><STRONG><a name="[16]"></a>TMR3_IRQHandler</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, startup_nuc1xx.o(.text))
-<BR>[Address Reference Count : 1]<UL><LI> startup_nuc1xx.o(RESET)
-</UL>
 <P><STRONG><a name="[21]"></a>USBD_IRQHandler</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, startup_nuc1xx.o(.text))
-<BR>[Address Reference Count : 1]<UL><LI> startup_nuc1xx.o(RESET)
-</UL>
-<P><STRONG><a name="[c]"></a>WDT_IRQHandler</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, startup_nuc1xx.o(.text))
 <BR>[Address Reference Count : 1]<UL><LI> startup_nuc1xx.o(RESET)
 </UL>
 <P><STRONG><a name="[2f]"></a>__user_initial_stackheap</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, startup_nuc1xx.o(.text))
@@ -369,13 +357,13 @@ Global Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> startup_nuc1xx.o(RESET)
 </UL>
-<P><STRONG><a name="[54]"></a>DrvGPIO_ClrBit</STRONG> (Thumb, 36 bytes, Stack size 8 bytes, drvgpio.o(i.DrvGPIO_ClrBit))
+<P><STRONG><a name="[53]"></a>DrvGPIO_ClrBit</STRONG> (Thumb, 36 bytes, Stack size 8 bytes, drvgpio.o(i.DrvGPIO_ClrBit))
 <BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = DrvGPIO_ClrBit
 </UL>
 <BR>[Called By]<UL><LI><a href="#[13]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;TMR0_IRQHandler
 </UL>
 
-<P><STRONG><a name="[57]"></a>DrvGPIO_GetBit</STRONG> (Thumb, 36 bytes, Stack size 8 bytes, drvgpio.o(i.DrvGPIO_GetBit))
+<P><STRONG><a name="[58]"></a>DrvGPIO_GetBit</STRONG> (Thumb, 36 bytes, Stack size 8 bytes, drvgpio.o(i.DrvGPIO_GetBit))
 <BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = DrvGPIO_GetBit
 </UL>
 <BR>[Called By]<UL><LI><a href="#[39]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
@@ -389,25 +377,20 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[4b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ESP_config
 </UL>
 
-<P><STRONG><a name="[51]"></a>DrvGPIO_Open</STRONG> (Thumb, 126 bytes, Stack size 16 bytes, drvgpio.o(i.DrvGPIO_Open))
+<P><STRONG><a name="[50]"></a>DrvGPIO_Open</STRONG> (Thumb, 126 bytes, Stack size 16 bytes, drvgpio.o(i.DrvGPIO_Open))
 <BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = DrvGPIO_Open
 </UL>
-<BR>[Called By]<UL><LI><a href="#[56]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;set_TimerPWM_Vibra
-<LI><a href="#[52]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;NUC_button_config
-<LI><a href="#[50]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;NUC_LED_config
+<BR>[Called By]<UL><LI><a href="#[51]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;NUC_button_config
+<LI><a href="#[4f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;NUC_LED_config
 </UL>
 
-<P><STRONG><a name="[53]"></a>DrvGPIO_SetBit</STRONG> (Thumb, 36 bytes, Stack size 8 bytes, drvgpio.o(i.DrvGPIO_SetBit))
+<P><STRONG><a name="[52]"></a>DrvGPIO_SetBit</STRONG> (Thumb, 36 bytes, Stack size 8 bytes, drvgpio.o(i.DrvGPIO_SetBit))
 <BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = DrvGPIO_SetBit
 </UL>
 <BR>[Called By]<UL><LI><a href="#[13]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;TMR0_IRQHandler
 </UL>
 
-<P><STRONG><a name="[58]"></a>DrvSYS_Delay</STRONG> (Thumb, 36 bytes, Stack size 0 bytes, drvsys.o(i.DrvSYS_Delay))
-<BR><BR>[Called By]<UL><LI><a href="#[39]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
-</UL>
-
-<P><STRONG><a name="[4f]"></a>DrvSYS_GetExtClockFreq</STRONG> (Thumb, 4 bytes, Stack size 0 bytes, drvsys.o(i.DrvSYS_GetExtClockFreq))
+<P><STRONG><a name="[4e]"></a>DrvSYS_GetExtClockFreq</STRONG> (Thumb, 4 bytes, Stack size 0 bytes, drvsys.o(i.DrvSYS_GetExtClockFreq))
 <BR><BR>[Called By]<UL><LI><a href="#[4a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GetUartClk
 </UL>
 
@@ -474,17 +457,11 @@ Global Symbols
 <BR>[Calls]<UL><LI><a href="#[4d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;DrvUART_Write
 </UL>
 <BR>[Called By]<UL><LI><a href="#[2b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;UART_INT_HANDLE
-<LI><a href="#[13]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;TMR0_IRQHandler
-<LI><a href="#[4e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ESP_set_vibration_handler
 <LI><a href="#[39]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[4e]"></a>ESP_set_vibration_handler</STRONG> (Thumb, 16 bytes, Stack size 8 bytes, nuc_config.o(i.ESP_set_vibration_handler))
-<BR><BR>[Stack]<UL><LI>Max Depth = 32<LI>Call Chain = ESP_set_vibration_handler &rArr; ESP_send_key &rArr; DrvUART_Write
-</UL>
-<BR>[Calls]<UL><LI><a href="#[4c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ESP_send_key
-</UL>
-<BR>[Called By]<UL><LI><a href="#[39]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
+<P><STRONG><a name="[56]"></a>ESP_set_vibration_handler</STRONG> (Thumb, 6 bytes, Stack size 0 bytes, nuc_config.o(i.ESP_set_vibration_handler))
+<BR><BR>[Called By]<UL><LI><a href="#[39]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
 <P><STRONG><a name="[f]"></a>GPAB_IRQHandler</STRONG> (Thumb, 60 bytes, Stack size 16 bytes, drvgpio.o(i.GPAB_IRQHandler))
@@ -497,18 +474,18 @@ Global Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> startup_nuc1xx.o(RESET)
 </UL>
-<P><STRONG><a name="[50]"></a>NUC_LED_config</STRONG> (Thumb, 24 bytes, Stack size 8 bytes, nuc_config.o(i.NUC_LED_config))
+<P><STRONG><a name="[4f]"></a>NUC_LED_config</STRONG> (Thumb, 24 bytes, Stack size 8 bytes, nuc_config.o(i.NUC_LED_config))
 <BR><BR>[Stack]<UL><LI>Max Depth = 24<LI>Call Chain = NUC_LED_config &rArr; DrvGPIO_Open
 </UL>
-<BR>[Calls]<UL><LI><a href="#[51]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;DrvGPIO_Open
+<BR>[Calls]<UL><LI><a href="#[50]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;DrvGPIO_Open
 </UL>
 <BR>[Called By]<UL><LI><a href="#[39]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[52]"></a>NUC_button_config</STRONG> (Thumb, 64 bytes, Stack size 8 bytes, nuc_config.o(i.NUC_button_config))
+<P><STRONG><a name="[51]"></a>NUC_button_config</STRONG> (Thumb, 74 bytes, Stack size 8 bytes, nuc_config.o(i.NUC_button_config))
 <BR><BR>[Stack]<UL><LI>Max Depth = 24<LI>Call Chain = NUC_button_config &rArr; DrvGPIO_Open
 </UL>
-<BR>[Calls]<UL><LI><a href="#[51]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;DrvGPIO_Open
+<BR>[Calls]<UL><LI><a href="#[50]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;DrvGPIO_Open
 </UL>
 <BR>[Called By]<UL><LI><a href="#[39]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
@@ -521,12 +498,27 @@ Global Symbols
 <P><STRONG><a name="[29]"></a>SystemInit</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, system_nuc1xx.o(i.SystemInit))
 <BR>[Address Reference Count : 1]<UL><LI> startup_nuc1xx.o(.text)
 </UL>
-<P><STRONG><a name="[13]"></a>TMR0_IRQHandler</STRONG> (Thumb, 126 bytes, Stack size 8 bytes, nuc_config.o(i.TMR0_IRQHandler))
-<BR><BR>[Stack]<UL><LI>Max Depth = 32<LI>Call Chain = TMR0_IRQHandler &rArr; ESP_send_key &rArr; DrvUART_Write
+<P><STRONG><a name="[13]"></a>TMR0_IRQHandler</STRONG> (Thumb, 176 bytes, Stack size 8 bytes, nuc_config.o(i.TMR0_IRQHandler))
+<BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = TMR0_IRQHandler &rArr; DrvGPIO_SetBit
 </UL>
-<BR>[Calls]<UL><LI><a href="#[53]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;DrvGPIO_SetBit
-<LI><a href="#[54]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;DrvGPIO_ClrBit
-<LI><a href="#[4c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ESP_send_key
+<BR>[Calls]<UL><LI><a href="#[52]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;DrvGPIO_SetBit
+<LI><a href="#[53]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;DrvGPIO_ClrBit
+<LI><a href="#[54]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;NVIC_DisableIRQ
+</UL>
+<BR>[Address Reference Count : 1]<UL><LI> startup_nuc1xx.o(RESET)
+</UL>
+<P><STRONG><a name="[14]"></a>TMR1_IRQHandler</STRONG> (Thumb, 144 bytes, Stack size 8 bytes, drvtimer.o(i.TMR1_IRQHandler))
+<BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = TMR1_IRQHandler
+</UL>
+<BR>[Address Reference Count : 1]<UL><LI> startup_nuc1xx.o(RESET)
+</UL>
+<P><STRONG><a name="[15]"></a>TMR2_IRQHandler</STRONG> (Thumb, 144 bytes, Stack size 8 bytes, drvtimer.o(i.TMR2_IRQHandler))
+<BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = TMR2_IRQHandler
+</UL>
+<BR>[Address Reference Count : 1]<UL><LI> startup_nuc1xx.o(RESET)
+</UL>
+<P><STRONG><a name="[16]"></a>TMR3_IRQHandler</STRONG> (Thumb, 144 bytes, Stack size 8 bytes, drvtimer.o(i.TMR3_IRQHandler))
+<BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = TMR3_IRQHandler
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> startup_nuc1xx.o(RESET)
 </UL>
@@ -540,7 +532,7 @@ Global Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> startup_nuc1xx.o(RESET)
 </UL>
-<P><STRONG><a name="[2b]"></a>UART_INT_HANDLE</STRONG> (Thumb, 108 bytes, Stack size 16 bytes, nuc_config.o(i.UART_INT_HANDLE))
+<P><STRONG><a name="[2b]"></a>UART_INT_HANDLE</STRONG> (Thumb, 102 bytes, Stack size 16 bytes, nuc_config.o(i.UART_INT_HANDLE))
 <BR><BR>[Stack]<UL><LI>Max Depth = 40<LI>Call Chain = UART_INT_HANDLE &rArr; ESP_send_key &rArr; DrvUART_Write
 </UL>
 <BR>[Calls]<UL><LI><a href="#[55]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;DrvUART_Read
@@ -548,40 +540,44 @@ Global Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> nuc_config.o(i.ESP_config)
 </UL>
+<P><STRONG><a name="[c]"></a>WDT_IRQHandler</STRONG> (Thumb, 44 bytes, Stack size 8 bytes, drvtimer.o(i.WDT_IRQHandler))
+<BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = WDT_IRQHandler
+</UL>
+<BR>[Address Reference Count : 1]<UL><LI> startup_nuc1xx.o(RESET)
+</UL>
 <P><STRONG><a name="[45]"></a>__ARM_common_switch8</STRONG> (Thumb, 28 bytes, Stack size 8 bytes, drvgpio.o(i.__ARM_common_switch8))
 <BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = __ARM_common_switch8
 </UL>
 <BR>[Called By]<UL><LI><a href="#[44]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;DrvGPIO_InitFunction
 </UL>
 
-<P><STRONG><a name="[59]"></a>enable_Timer0</STRONG> (Thumb, 40 bytes, Stack size 0 bytes, nuc_config.o(i.enable_Timer0))
+<P><STRONG><a name="[59]"></a>enable_Timer0</STRONG> (Thumb, 28 bytes, Stack size 0 bytes, nuc_config.o(i.enable_Timer0))
 <BR><BR>[Called By]<UL><LI><a href="#[2c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vibration
 </UL>
 
-<P><STRONG><a name="[39]"></a>main</STRONG> (Thumb, 250 bytes, Stack size 16 bytes, main.o(i.main))
+<P><STRONG><a name="[39]"></a>main</STRONG> (Thumb, 242 bytes, Stack size 16 bytes, main.o(i.main))
 <BR><BR>[Stack]<UL><LI>Max Depth = 104<LI>Call Chain = main &rArr; ESP_config &rArr; DrvUART_Open &rArr; GetUartClk &rArr; DrvSYS_GetPLLClockFreq
 </UL>
-<BR>[Calls]<UL><LI><a href="#[56]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;set_TimerPWM_Vibra
-<LI><a href="#[52]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;NUC_button_config
-<LI><a href="#[50]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;NUC_LED_config
-<LI><a href="#[4e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ESP_set_vibration_handler
+<BR>[Calls]<UL><LI><a href="#[57]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;set_TimerPWM_Vibra
+<LI><a href="#[51]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;NUC_button_config
+<LI><a href="#[4f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;NUC_LED_config
+<LI><a href="#[56]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ESP_set_vibration_handler
 <LI><a href="#[4c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ESP_send_key
 <LI><a href="#[4b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ESP_config
-<LI><a href="#[58]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;DrvSYS_Delay
-<LI><a href="#[57]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;DrvGPIO_GetBit
+<LI><a href="#[58]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;DrvGPIO_GetBit
 </UL>
 <BR>[Called By]<UL><LI><a href="#[38]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__rt_entry_main
 </UL>
 
-<P><STRONG><a name="[56]"></a>set_TimerPWM_Vibra</STRONG> (Thumb, 118 bytes, Stack size 8 bytes, nuc_config.o(i.set_TimerPWM_Vibra))
-<BR><BR>[Stack]<UL><LI>Max Depth = 24<LI>Call Chain = set_TimerPWM_Vibra &rArr; DrvGPIO_Open
+<P><STRONG><a name="[57]"></a>set_TimerPWM_Vibra</STRONG> (Thumb, 128 bytes, Stack size 8 bytes, nuc_config.o(i.set_TimerPWM_Vibra))
+<BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = set_TimerPWM_Vibra
 </UL>
-<BR>[Calls]<UL><LI><a href="#[51]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;DrvGPIO_Open
+<BR>[Calls]<UL><LI><a href="#[54]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;NVIC_DisableIRQ
 </UL>
 <BR>[Called By]<UL><LI><a href="#[39]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[2c]"></a>vibration</STRONG> (Thumb, 16 bytes, Stack size 16 bytes, main.o(i.vibration))
+<P><STRONG><a name="[2c]"></a>vibration</STRONG> (Thumb, 20 bytes, Stack size 16 bytes, main.o(i.vibration))
 <BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = vibration
 </UL>
 <BR>[Calls]<UL><LI><a href="#[59]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enable_Timer0
@@ -598,6 +594,11 @@ Local Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> startup_nuc1xx.o(RESET)
 </UL>
+<P><STRONG><a name="[54]"></a>NVIC_DisableIRQ</STRONG> (Thumb, 14 bytes, Stack size 0 bytes, nuc_config.o(i.NVIC_DisableIRQ))
+<BR><BR>[Called By]<UL><LI><a href="#[13]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;TMR0_IRQHandler
+<LI><a href="#[57]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;set_TimerPWM_Vibra
+</UL>
+
 <P><STRONG><a name="[42]"></a>BaudRateCalculator</STRONG> (Thumb, 204 bytes, Stack size 40 bytes, drvuart.o(i.BaudRateCalculator))
 <BR><BR>[Stack]<UL><LI>Max Depth = 40<LI>Call Chain = BaudRateCalculator
 </UL>
@@ -610,7 +611,7 @@ Local Symbols
 <BR><BR>[Stack]<UL><LI>Max Depth = 48<LI>Call Chain = GetUartClk &rArr; DrvSYS_GetPLLClockFreq
 </UL>
 <BR>[Calls]<UL><LI><a href="#[46]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;DrvSYS_GetPLLClockFreq
-<LI><a href="#[4f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;DrvSYS_GetExtClockFreq
+<LI><a href="#[4e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;DrvSYS_GetExtClockFreq
 <LI><a href="#[43]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_uidivmod
 </UL>
 <BR>[Called By]<UL><LI><a href="#[49]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;DrvUART_Open
