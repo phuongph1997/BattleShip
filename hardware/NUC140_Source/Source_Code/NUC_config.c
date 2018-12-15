@@ -4,7 +4,7 @@ volatile uint8_t Receive_buf[16] = "";
 volatile uint16_t readCount = 0;
 vibration_handler_t vibra = NULL;
 volatile uint8_t Timers_Vibration = 0;
-volatile uint8_t Timer_Cnt = 1;
+volatile uint8_t Timer_Cnt = 2;
 uint32_t Timer_High = 0;
 uint32_t Timer_Low = 0;
 uint32_t Ticks = 1;
@@ -19,22 +19,13 @@ void UART_INT_HANDLE(uint32_t userData)
 	while(UART0->ISR.RDA_IF==1) 
 	{
 		DrvUART_Read(UART_PORT0,bInChar,1);	
-//		if(readCount < 1) // check if Buffer is full
-//		{
-			Receive_buf[readCount] = bInChar[0];
-//			readCount++;
-//		}
-//		else if (readCount==1)
-//		{
-			//readCount=0;
-		
-//		}			
+			Receive_buf[readCount] = bInChar[0];			
 	}
 	
 	if(Receive_buf[0] == 'h')
 	{
 		ESP_send_key('H');
-		(*vibra)(73728,18432);		// 0.6s rung, 0.4s tat
+		(*vibra)(737,184);		// 0.6s rung, 0.4s tat
 	}
 	else if(Receive_buf[0] == 'e')	
 	{
@@ -53,52 +44,26 @@ void Led_Test(int32_t time)
 
 void TMR0_IRQHandler(void) // Timer0 interrupt subroutine 
 {
-	/*
-		if ((Timer_Cnt %2) == 0) 
-		{
-			DrvGPIO_SetBit(E_GPA,15);
-			DrvGPIO_SetBit(E_GPA,14);
-			//TIMER0->TCSR.MODE = E_ONESHOT_MODE; 
-			//TIMER0->TCSR.CEN = 1;
-			TIMER0->TISR.TIF = 1;
-		}
-		else
-		{
-			DrvGPIO_SetBit(E_GPA,15);
-
-			DrvGPIO_ClrBit(E_GPA,14);
-			//TIMER0->TCSR.MODE = E_ONESHOT_MODE; 
-			//TIMER0->TCSR.CEN = 1;
-			TIMER0->TISR.TIF = 1;
-		}
-		Timer_Cnt++;
-	*/
-	
-	
-	if(Timer_Cnt <= 6)
+	if(Timer_Cnt <= 101)
 	{
 		if ((Timer_Cnt %2) == 0) 
 		{
-			DrvGPIO_SetBit(E_GPA,14);
+			DrvGPIO_SetBit(E_GPC,0);
 			TIMER0->TCMPR = Timer_High;	
 			TIMER0->TISR.TIF = 1;			
 			TIMER0->TCSR.MODE = E_ONESHOT_MODE;
 			TIMER0->TCSR.CEN = 1;
-			//set_TimerPWM_Vibra(Timer_High);
 			Timer_Cnt++;
 		}
 		else
 		{
-			DrvGPIO_ClrBit(E_GPA,14);
+			DrvGPIO_ClrBit(E_GPC,0);
 			TIMER0->TCMPR = Timer_Low;
 			TIMER0->TISR.TIF = 1;
 			TIMER0->TCSR.MODE = E_ONESHOT_MODE; 
 			TIMER0->TCSR.CEN = 1;			
-			//DrvTIMER_Open (E_TMR0, Timer_Low, E_ONESHOT_MODE);
-			//set_TimerPWM_Vibra(Timer_Low);
 			Timer_Cnt++;
 		}
-			//Timers_Vibration++;
 	}
 	// after 4 times turn off timer 
 	else

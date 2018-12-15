@@ -54,21 +54,27 @@ io.on("connection", function(socket) {
      **************************************/
     socket.on("from", function(msg) {
         //console.log("Page type is: " + msg.type);
+	var temp = CheckSession(msg.cookie)
+    console.log("temp: " + temp)
+    if (temp != null)
+        if (msg.type != temp)
+		  socket.emit("Change_Page",temp)
 
+	
         console.log("cookie: " + msg.cookie)
         socket.player = true
         CompairSession(msg.cookie, socket)
         switch (msg.type) {
-            case "Index":
+            case "index":
                 HandlerIndexPage(socket, msg)
                 break;
             case "selectRemote":
                 HandlerSelectremotePage(socket, msg)
                 break;
-            case "Login":
+            case "login":
                 HandlerLoginPage(socket, msg)
                 break;
-            case "Register":
+            case "register":
                 HandlerRegisterPage(socket, msg)
                 break;
             default:
@@ -87,6 +93,7 @@ io.on("connection", function(socket) {
             }
             Array_Gamepad.splice(numberOfElementInArray, 1)
             io.sockets.emit('Sever_Gamepad_Status', Array_Gamepad);
+			
         }
 
 
@@ -105,36 +112,57 @@ io.on("connection", function(socket) {
     });
 
     socket.on("Client_Select_Gamepad", function(data) {
-
+		temp = UserGlobal.get(socket.username)
+		if(temp.page == "selectRemote")
+		{
         console.log("Selected GamePad " + data);
         // phuong
 
         var numberOfElementInArray = Array_Gamepad.findIndex(myFunction);
-
+		
         function myFunction(value, index, array) {
             return value.address == data;
         }
 
-        Array_Gamepad[numberOfElementInArray].status = false
-        io.sockets.emit('Server_Gamepad_Status', Array_Gamepad);
+        //Array_Gamepad[numberOfElementInArray].status = false
+		if(Array_Gamepad[numberOfElementInArray].status == true)
+		{
+			Array_Gamepad[numberOfElementInArray].status = false
+			io.sockets.emit('Server_Gamepad_Status', Array_Gamepad);
 
         console.log(UserGlobal);
         temp = UserGlobal.get(socket.username)
         temp.gamepad = data
+		temp.page= "room"
         UserGlobal.set(socket.username, temp)
+		
+		socket.emit("Change_Page","./room")
+			
+		}	
+		else {
+			socket.emit("Change_Page","./selectRemote")
+		}
 
-
+		}
 
     });
+	
+	
     /************************************************************************/
 
-
+	socket.on("Change_Gamepad",function(){
+		socket.emit("Change_Page","./selectRemote")
+	})
+	
+		
+		
+	
 
     /**************************************
      ********Gamepad related socket*******
      **************************************/
     socket.on("Gamepad_Connect", function(data) {
-        console.log("gamepad connect" + data)
+        console.log("Gamepad connect from ESP " + data)
         //phuong
         var temp = { "address": data, "status": true }
         Array_Gamepad.push(temp) //mang nay se luu dang sach gamepad dang ket noi
@@ -244,24 +272,25 @@ io.on("connection", function(socket) {
     socket.on("Client_Hit_Vibration", function(data) {
         var gamepad = UserGlobal.get(socket.username).gamepad
         var room_name = UserGlobal.get(socket.username).room
-        switch (data) {
-            case "Hit":
+        //switch (data) {
+            //case "Hit":
                 // if (turn == 1) {
                 //     io.sockets.in('1').emit("Server_SendVibra", data);
                 // } else if (turn == 2) {
                 //     io.sockets.in('2').emit("Server_SendVibra", data);
                 // }
-                io.in(gamepad).emit("Server_SendVibra", data)
-                break;
-            case "EndGame":
+				console.log("ban trung ")
+                socket.to(gamepad).emit("Server_SendVibra", data)
+               // break;
+            //case "EndGame":
                 // if (turn == 1) {
                 //     io.sockets.in('1').emit("Server_SendVibra", data);
                 // } else if (turn == 2) {
                 //     io.sockets.in('2').emit("Server_SendVibra", data);
                 // }
-                io.in(gamepad).emit("Server_SendVibra", data)
-                break;
-        }
+				//socket.to(gamepad).emit("Server_SendVibra", data)
+               // break;
+        //}
     })
     /*********************************************************/
 
@@ -299,7 +328,9 @@ io.on("connection", function(socket) {
 
 
     socket.on("Client_Join_Room", function(data) {
-
+		temp = UserGlobal.get(socket.username)
+		if(temp.page == "room")
+		{	
         console.log("Client_Join_Room" + data)
         console.log(socket.username)
         temp = Room2Users.get(data)
@@ -314,9 +345,31 @@ io.on("connection", function(socket) {
 
         temp = UserGlobal.get(socket.username)
         temp.room = data
+		temp.page = "index"
         UserGlobal.set(socket.username, temp)
+		
         console.log(Room2Users)
         console.log(UserGlobal)
+		}
+		socket.emit("Change_Page","./index")
+		
+
+    })
+	
+	socket.on("Logout", function()
+    {
+
+
+      temp = UserGlobal.get(socket.username)
+      gamepad_name= temp.gamepad
+
+      var numberOfElementInArray = Array_Gamepad.findIndex(myFunction);
+      function myFunction(value, index, array) {
+          return value.address == gamepad_name;
+      }
+      Array_Gamepad[numberOfElementInArray].status = true
+      UserGlobal.delete(socket.username)
+      io.sockets.emit('Server_Gamepad_Status', Array_Gamepad);
 
     })
     /*********************************************************/
@@ -346,7 +399,7 @@ function HandlerIndexPage(socket, msg) {
     socket.join(temp.gamepad)
     socket.join(temp.room)
 
-    console.log (socket.userame + " joining room " + temp.room)
+    console.log (socket.username + " joining room " + temp.room)
     console.log ("room lenght " + io.sockets.adapter.rooms[temp.room].length)
     // first player to enter the room
     if (io.sockets.adapter.rooms[temp.room].length == 1) {
@@ -411,10 +464,12 @@ function LoginSuccess(username, pass, socket) {
     UserGlobal.set(username, {
         "session": SessionKey,
         "gamepad": null,
-        "room": null
+        "room": null,
+		"page": "selectRemote"
     })
-
+	
     socket.emit("Server_Login_Sucess", saveCookie);
+	socket.emit("Change_Page","./selectRemote")
 
     console.log(UserGlobal)
 }
@@ -449,38 +504,46 @@ function CheckSession(session) {
     for (const v of UserGlobal.values()) {
         if (v.session.localeCompare(session) == 0) {
             console.log("change page")
-            return true
+            return v.page
         }
     }
-    return false
+    return null
 }
 
 app.get("/", function(req, res) {
-    if (CheckSession(req.cookies.seasion)) {
-        res.redirect('/selectRemote')
+    var temp= CheckSession(req.cookies.seasion)
+    if (temp != null) {
+        res.render(temp)
     } else
         res.render("login");
 });
 
 app.get("/login", function(req, res) {
-    if (CheckSession(req.cookies.seasion)) {
-        res.redirect('/selectRemote')
+    var temp= CheckSession(req.cookies.seasion)
+    if (temp != null ) {
+        res.redirect(temp)
     } else
         res.render("login");
 });
 
 app.get("/index", function(req, res) {
-    if (CheckSession(req.cookies.seasion)) {
-        res.render("index");
+    var temp= CheckSession(req.cookies.seasion)
+    if (temp == "index"){
+		res.render(temp)
+	} else if (temp != null) {
+        res.redirect(temp)
     } else
-        res.redirect('/login')
+        res.redirect("login");
 });
 
 app.get("/selectRemote", function(req, res) {
-    if (CheckSession(req.cookies.seasion)) {
-        res.render("selectRemote");
+    var temp= CheckSession(req.cookies.seasion)
+	if (temp == "selectRemote"){
+		res.render(temp)
+	} else if (temp != null) {
+        res.redirect(temp)
     } else
-        res.redirect('/login')
+        res.redirect("login");
 });
 
 app.get("/register", function(req, res) {
@@ -488,10 +551,15 @@ app.get("/register", function(req, res) {
 });
 
 app.get("/room", function(req, res) {
-    if (CheckSession(req.cookies.seasion)) {
-        res.render("room");
+	
+    var temp= CheckSession(req.cookies.seasion)
+	
+    if (temp == "room"){
+		res.render(temp)
+	} else if (temp != null) {
+        res.redirect(temp)
     } else
-        res.redirect('/login')
+        res.redirect("login");
 });
 
 app.get("/gamepad", function(req, res) {

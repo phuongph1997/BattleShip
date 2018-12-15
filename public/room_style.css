@@ -78,7 +78,7 @@ h3, h4{
     display: none;
 }
 
-.btn_join {
+button {
     float: right;
     display: inline-block;
     margin: 0 10 5 0;

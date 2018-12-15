@@ -1,7 +1,7 @@
 <html>
 
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1" , charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" , charset="utf-8" http-equiv="expires" content="0">
     <!-- <script src="/socket.io/socket.io.js"></script> -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
@@ -17,10 +17,13 @@
                 <div id="left" class="room_element container">
                     <h2>Người dùng</h2>
                     <div>
-                        Hello tên người dùng.<br>
-                        Số trận tham gia: <br>
-                        chỉ số bắn (trúng/bắn):<br>;
+                        Hello: <span id="name"></span><br>
+                        Số trận tham gia: <span id="no_game"></span><br>
+                        chỉ số bắn (trúng/bắn): <span id="ratio"></span><br>
                     </div>
+
+                    <button id="btn_logout">logout</button>
+                    <button id="btn_change_gamepad">change_gamepad</button>
                 </div>
                 <div id="right" class="container room_element">
                     <div>
@@ -31,7 +34,8 @@
                         <input style="text-align: justify;" maxlength="15" id="input_name" width="10"></input>
                         <button id="btn_create_room">tạo phòng</button>
                     </div>
-                    <h4 id="error" class="error hidden">Tên phòng đã tồn tại</h4>
+                    <h4 id="error1" class="error hidden">Tên phòng đã tồn tại</h4>
+                    <h4 id="error2" class="error hidden">xin hãy nhập tên phòng</h4>
                     <div id="room_container" class="room_element">
                     </div>
                 </div>

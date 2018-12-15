@@ -3,7 +3,7 @@ var socket = io.connect("18.136.212.75")
 var map = new Map()
 
 var serverCheck = {
-    "type": "Login",
+    "type": "room",
     "username": getCookie("username"),
     "cookie": getCookie("seasion")
 }
@@ -28,19 +28,35 @@ $(document).ready(function(e) {
     //Create_room("room2", 1, ["abcd","der"]);
     //Create_room("room3", 1, ["asdf","sdgadsg"]);
 
+    $("#name").text(getCookie("username"))
+
     $("#btn_create_room").click(function() {
         var room_name = $("#input_name").val()
+        console.log(room_name)
+        $(".error").addClass('hidden')
         if (map.has(room_name)) {
-            $("#error").removeClass('hidden')
+            $("#error1").removeClass('hidden')
             console.log("create room: " + room_name + " already exist")
+        } else if(room_name == ""){
+            $("#error2").removeClass('hidden')
+            console.log("please enter room name")
         } else {
-            $("#error").addClass('hidden')
             console.log("create room: " + "create " + room_name)
 
             Create_room(room_name, 0, "")
             socket.emit("Client_Create_Room", room_name)
         }
 
+    })
+
+    $("#btn_logout").click(function(){
+        console.log("Logout")
+        socket.emit("Logout")
+    })
+
+    $("btn_btn_change_gamepad").click(function(){
+        console.log("change gamepad")
+        socket.emit("Change_Gamepad")
     })
 })
 
@@ -155,4 +171,8 @@ socket.on("Server_Room_Status", function(data) {
         var container = document.getElementById('room_container');
         container.innerText = "Không có room tồn tại, hãy tạo room mới"
     }
+})
+
+socket.on("Change_Page", function(data){
+    window.location.href = data
 })

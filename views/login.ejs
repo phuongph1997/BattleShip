@@ -3,7 +3,7 @@
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
 <head>
 <title>CSS Template</title>
-<meta charset="utf-8">
+<meta charset="utf-8" http-equiv="expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="/socket.io/socket.io.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
@@ -12,7 +12,7 @@
     var socket = io.connect('18.136.212.75');
 	
 	var serverCheck = {
-            "type": "Login",
+            "type": "login",
 			"username": getCookie("username"),
             "cookie": getCookie("seasion")
         }

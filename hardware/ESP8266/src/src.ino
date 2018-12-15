@@ -29,20 +29,27 @@ SocketIoClient socket;
 
 // Kết nối wifi
 void setupNetwork() {
-  Serial.println("Connecting to wifi "); 
+  //Serial.println("Connecting to wifi "); 
     WiFi.begin(ssid, password);
     uint8_t i = 0;
     while (WiFi.status() != WL_CONNECTED ) 
     {
       delay(500);
-      Serial.print("."); 
+      //Serial.print("."); 
       ESP.wdtFeed();
     }
 
     // Hàm này là hàm in log ra serial
-    Serial.println("Wifi connected!");
+    //Serial.println("Wifi connected!");
 }
 
+void onVibrate(const char* payload, size_t length)
+{
+  //Serial.println("VIBRATE");
+  
+  Serial.write("h");
+}
+/*
 void turnledon(const char* payload, size_t length){
   Serial.print("payload length: ");
   Serial.println(length);
@@ -51,41 +58,35 @@ void turnledon(const char* payload, size_t length){
   Serial.print("receive: ");
   Serial.println(payload);
 }
+*/
 
 void setup() {
     // Bắt đầu kết nối serial với tốc độ baud là 115200.
     // Khi bạn bật serial monitor lên để xem log thì phải set đúng tốc độ baud này.
     Serial.begin(9600);
-    Serial.println ("test esp8266");
+    //Serial.println ("test esp8266");
     setupNetwork();
     
     // Lắng nghe sự kiện led-change thì sẽ thực hiện hàm changeLedState
-    socket.on(GetIDSocket, turnledon);
+    //socket.on(GetIDSocket, turnledon);
     
     // Kết nối đến server
     socket.begin(host, port); 
-    Serial.println("connect to the server");
-    socket.emit(ConnectSocket);
+    //Serial.println("connect to the server");
+    String mac_str = "\"" + WiFi.macAddress() + "\"";
+    char mac[20]; 
+    mac_str.toCharArray(mac, 20);
+    socket.emit(ConnectSocket, mac);
+  
+  while(Serial.available())
+    Serial.read();
 }
 
 void loop() {
      // Luôn luôn giữ kết nối với server.
     socket.loop();
 
-    socket.on(Client_Hit_Vibration,function(data)
-    {
-      switch(data)
-      {
-        case "Hit":
-            Serial.write("Short_Vibra");
-        break;
-        case "EndGame":
-            Serial.write("Long_Vibra");
-        break;
-        default:
-        break;
-      }
-    })
+    socket.on("Server_SendVibra", onVibrate);
     if (Serial.available())
     {
       uint8_t input = Serial.read();

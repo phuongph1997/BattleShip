@@ -33,7 +33,7 @@ socket.on("Cookie_Fail",function(){
 			window.location.href = './login';
 		})
 			var serverCheck = {
-				"type": "Index",
+				"type": "index",
 				"username": getCookie("username"),
 				"cookie": getCookie("seasion")
 			}
@@ -106,6 +106,7 @@ socket.on("Server_WereShot", function(data){
   if ( $('#left .bomb.hit').length == ships.reduce(getSum)){
     state = states.ENDGAME
     $("#lose").removeClass('hidden')
+    Timer_Off()
   }
 });
 
@@ -120,7 +121,7 @@ socket.on("Server_Shot_Result", function(data){
   $('#left #shots').html("Shots: &nbsp; " + $('#right .bomb').length);
   if (data){
     // Emit to ESP8266 that HIT true ship, then turn on the vibration
-
+	socket.emit("Client_Hit_Vibration","Hit");
     $(CurrentID).addClass('hit');
     $('#left #hits').html("Hits: &nbsp;&nbsp;&nbsp;&nbsp; " + $('#right .bomb.hit').length);
     Timer_Off()
@@ -130,9 +131,10 @@ socket.on("Server_Shot_Result", function(data){
     //Switch_Turn()
   // check if you win the game
   if ( $('#right .bomb.hit').length == ships.reduce(getSum)){
-	socket.emit("Client_End_Game");
+	  socket.emit("Client_Hit_Vibration","EndGame");
     state = states.ENDGAME
     $("#win").removeClass('hidden')
+    Timer_Off()
   }
 });
 
@@ -435,6 +437,21 @@ function Process(key){
     case states.OPPONENTTURN:
       MoveCursor (key, 2)
       break;
+    case states.ENDGAME:
+      if (key == command.OK){
+        var shot = $('#right .bomb').length
+        var hit = $('#right .bomb.hit').length
+        var result = true
+        if ($("#win").hasClass('hidden'))
+          result = false
+
+        var payload  = {
+          "result": result,
+          "shot": shot,
+          "hit": hit
+        }
+        socket.emit("Match_Result", payload)
+      }
     default:
       break;
   }
@@ -732,3 +749,7 @@ function Timer_Off(){
 function Timer_Reset(){
   time = TIMER_INTERVAL
 }
+
+socket.on("Change_Page", function(data){
+    window.location.href = data
+})
