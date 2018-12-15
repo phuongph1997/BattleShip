@@ -98,7 +98,6 @@ socket.on("Server_WereShot", function(data){
 	  console.log ("true ")
     $(PlayerID).addClass('hit')
     $('#right #hits').html("Hits: &nbsp;&nbsp;&nbsp;&nbsp; " + $('#left .bomb.hit').length);
-  } else {
     Timer_Off()
     Timer_On(2)
   }

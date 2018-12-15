@@ -1,0 +1,41 @@
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" , charset="utf-8">
+    <!-- <script src="/socket.io/socket.io.js"></script> -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="room_style.css">
+    <script type="text/javascript" src="room_script.js"></script>
+</head>
+
+<body>
+    <div id="wrapper">
+            <h1 style="display:inline;">BATTLE SHIP</h1>
+            <h2 style="display:inline;">Chọn phòng</h2>
+            <div id="container">
+                <div id="left" class="room_element container">
+                    <h2>Người dùng</h2>
+                    <div>
+                        Hello tên người dùng.<br>
+                        Số trận tham gia: <br>
+                        chỉ số bắn (trúng/bắn):<br>;
+                    </div>
+                </div>
+                <div id="right" class="container room_element">
+                    <div>
+                        <h2>Các phòng hiện có</h2>
+                    </div>
+                    <div id="room_create">
+                        <h4  style="display:inline;">tên phòng: </h4>
+                        <input style="text-align: justify;" maxlength="15" id="input_name" width="10"></input>
+                        <button id="btn_create_room">tạo phòng</button>
+                    </div>
+                    <h4 id="error" class="error hidden">Tên phòng đã tồn tại</h4>
+                    <div id="room_container" class="room_element">
+                    </div>
+                </div>
+            </div>
+</body>
+
+</html>

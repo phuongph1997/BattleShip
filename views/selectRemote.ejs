@@ -10,45 +10,60 @@
     <script src="/socket.io/socket.io.js"></script>
     <script>
         var socket = io.connect('18.136.212.75');
-    
+		var gamePad_ArrLength;
+		var gamePad_Name_Arr = [];
+		var gamePad_ID_Arr = [];
+		 var check = "NoGamePad";
     // socket.emit("Get_All_Remote_Status");
 
     socket.on("Cookie_Fail",function(){
-    alert("Call back login from selectRemote! ejs");
+    //alert("Call back login from selectRemote! ejs");
         window.location.href = './login';
     })
 
     socket.on("Server_Gamepad_Status",function(data)
     {
+		//alert("Status: " + data[0].status);
         console.log("Sever_Gamepad_Status receive");
-		var gamePad_ArrLength = data.length;
-		var gamePad_Status_Arr = [];
-		var gamePad_ID_Arr = [];
+		gamePad_ArrLength = data.length;
 		for(var i = 0; i < gamePad_ArrLength;i++)
 		{
-			gamePad_Status_Arr[i] = data[i];
-			gamePad_ID_Arr[i] = "player" + (i+1);
-		}
-		
-		for(var i = 0; i < gamePad_ArrLength;i++)
-		{
-			if(gamePad_Status_Arr[i] == true)
+			//gamePad_Status_Arr[i] = data[i];
+			gamePad_Name_Arr[i] = data[i].address;
+			//alert("GamePad  ID: " + gamePad_Name_Arr[i])
+			gamePad_ID_Arr[i] = "#player" + (i+1);
+			if(data[i].status == true)
 			{
+				$(gamePad_ID_Arr[i]).attr("disabled",false);
+				$(gamePad_ID_Arr[i]).attr("name",gamePad_Name_Arr[i]);
+			}
+			else
+			{
+				$(gamePad_ID_Arr[i]).attr("disabled",true);
+				$(gamePad_ID_Arr[i]).attr("name",gamePad_Name_Arr[i]);
+			}
+			
+		}
+		//alert("Number of Connected : " + gamePad_ArrLength);
+		for(var i = 0; i < gamePad_ArrLength;i++)
+		{
+			//if(gamePad_Status_Arr[i] == true)
+			//{
+		//		alert("ComeHere!" + gamePad_ID_Arr[i]);
 				$(gamePad_ID_Arr[i]).removeClass("gamepad_noConnect");
-				$(gamePad_ID_Arr[i]).after("Player"+ (i+1));
-			}
+				$(gamePad_ID_Arr[i]+"_text").text(gamePad_Name_Arr[i]);
+			//}
 		}
+		//alert("Name Gamepad: " + gamePad_Name_Arr[0]);
+		<!-- for(var i =0 ; i < gamePad_ArrLength ;i++) -->
+		<!-- { -->
+			<!-- $(gamePad_ID_Arr[i]).click(function(){		// "#player1" -->
+			<!-- alert("function clicked!"); -->
+			<!-- alert("Assign check: " + gamePad_Name_Arr[i - 1] + "--" + i); -->
+			<!-- check = gamePad_Name_Arr[i - 1]; -->
+		<!-- }); -->
+		<!-- } -->
 		
-		for(var i = 0; i < gamePad_ArrLength;i++)
-		{
-			if(gamePad_Status_Arr[i] == true)
-			{
-				$("#player1").attr("disabled",true);
-			}
-			else {
-				$("#player1").attr("disabled",false);
-			}
-		}
     })
     $(document).ready(function(){
         var serverCheck = {
@@ -59,21 +74,22 @@
         // alert(document.cookie);
         socket.emit("from",serverCheck);
         socket.emit("Client_Gamepad_Status");
-        var check = 0;
+		
+		 $("form input:radio").click(function(event){	
+			var 	name_Gamepad;	  
+			 check = event.target.name;
+		 }); 
+		
         $("#submitbtn").click(function(){
-          console.log (check)
-        if(check == 0)
-        {
-          alert("No remote seledted!");
-        }
-        else if (check == 3){
-              socket.emit("Client_Select_Gamepad",check);
-              window.location.href = './index';
-        }
-        else {
-          socket.emit("Client_Select_Gamepad",check);
-              window.location.href = './index';
-        }
+		  if(check == "NoGamePad")
+		  {
+			alert("No remote selected!");
+		  }
+			else{
+				//alert(" Now send data to server! " + check); 
+				socket.emit("Client_Select_Gamepad",check);
+				window.location.href = './room';
+			}
       
         });
 		// ==========================FOR TEST ONLY=======================================
@@ -108,16 +124,7 @@
 		 <!-- }); -->
 		 // ==========================FOR TEST ONLY=======================================
 		 // ==========================FOR TEST ONLY=======================================
-		for(var i = 0 ; i < gamePad_ArrLength; i++)
-		{
-			$(gamePad_ID_Arr[i]).click(function(){
-				check = i + 1;
-			});
-		}
 
-        $("#NoGamePad").click(function(){
-          check = 9
-        });
     });
 
         function getCookie(name) {
@@ -246,15 +253,14 @@ input:checked + .slider:before {
 
 <body class="backgr">
     <form class="form_select_remote">
-        <input id="player1" class = "gamepad_noConnect" type="radio" name="gender" value="Player1"> <br>
-        <input id="player2" class = "gamepad_noConnect" type="radio" name="gender" value="Player2"> <br>
-		<input id="player3" class = "gamepad_noConnect" type="radio" name="gender" value="Player3"> <br>
-		<input id="player4" class = "gamepad_noConnect" type="radio" name="gender" value="Player4"> <br>
-		<input id="player5" class = "gamepad_noConnect" type="radio" name="gender" value="Player5"> <br>
-		<input id="player6" class = "gamepad_noConnect" type="radio" name="gender" value="Player6"> <br>
-		<input id="player7" class = "gamepad_noConnect" type="radio" name="gender" value="Player7"> <br>
-		<input id="player8" class = "gamepad_noConnect" type="radio" name="gender" value="Player8"> <br>
-        <input id="NoGamePad" type="radio" name="gender" value="No gamepad">No gamepad<br>
+        <input id="player1" class = "gamepad_noConnect" type="radio" value="Player1"><span id="player1_text"></span><br>
+        <input id="player2" class = "gamepad_noConnect" type="radio" value="Player2"><span id="player2_text"></span> <br>
+		<input id="player3" class = "gamepad_noConnect" type="radio" value="Player3"><span id="player3_text"></span> <br>
+		<input id="player4" class = "gamepad_noConnect" type="radio" value="Player4"><span id="player4_text"></span> <br>
+		<input id="player5" class = "gamepad_noConnect" type="radio" value="Player5"><span id="player5_text"></span> <br>
+		<input id="player6" class = "gamepad_noConnect" type="radio" value="Player6"><span id="player6_text"></span> <br>
+		<input id="player7" class = "gamepad_noConnect" type="radio" value="Player7"><span id="player7_text"></span> <br>
+		<input id="player8" class = "gamepad_noConnect" type="radio" value="Player8"><span id="player8_text"></span> <br>
         <br><br>
         <input type="button" id="submitbtn" value="Submit" />
 

@@ -10,12 +10,6 @@ var server = require("http").Server(app);
 var io = require("socket.io")(server);
 var Gamepad1_Connected = false;
 
-var Login_SocketID_Arr = [];
-var User_Name_Arr = [];
-var AfterLogin_Status_Arr = [];
-var __IndexOfArr = 0;
-var __User_Used = false;
-var __User_Disconnect = false;
 app.use(cookieParser());
 
 var db = mysql.createConnection({
@@ -45,14 +39,16 @@ var check_ready = 0;
 var check_timeout = 0;
 var turn;
 
-var UserSession = new Map()
+var UserGlobal = new Map()
+var Room2Users = new Map()
+var Array_Gamepad = []
 // socket.on("Get_All_Remote_Status", function(){
 
 // })
 io.on("connection", function(socket) {
     var req = socket.request;
     console.log("ID ket noi: " + socket.id);
-
+    socket.check_connect_gamepad = null // kiem tra gamepad hay client connect
     /**************************************
      ********Connection handler page*******
      **************************************/
@@ -78,56 +74,22 @@ io.on("connection", function(socket) {
             default:
                 break;
         }
-        //console.log("socket.name : " + socket.username)
+        console.log("socket.name : " + socket.username)
     });
 
     socket.on("disconnect", function() {
-        //console.log("socket.player: " + socket.player)
-        if (socket.player == true)
-            console.log(socket.username + " Change page/ reload");
-        else if (socket.player == false)
-            console.log("tay cam " + socket.Phong + " ngat ket noi")
-        else if (socket.player == undefined) {
-            console.log("nguoi dung chua dang nhap ngat ket noi")
-        }
+        //phuong
+        if (socket.check_connect_gamepad != null) {
+            var numberOfElementInArray = Array_Gamepad.findIndex(myFunction);
 
-        for (var i = 0; i < __IndexOfArr; i++) {
-            console.log("Status of current disconnect: " + AfterLogin_Status_Arr[i + 1]);
-            if ((socket.id == Login_SocketID_Arr[i + 1]) && (AfterLogin_Status_Arr[i + 1] == true)) {
-                console.log("Only run when disconnect appear at selectRemote page!!");
-                if (__IndexOfArr == 0) {
-                    User_Name_Arr = null;
-                    console.log("User: " + User_Name_Arr[i]);
-                    return 1;
-                }
-                for (var j = i; i < __IndexOfArr; i++) {
-                    for (var u = j + 1; u < __IndexOfArr; u++) {
-                        User_Name_Arr[j] = User_Name_Arr[u];
-                    }
-                }
-                for (var j = i; i < __IndexOfArr; i++) {
-                    for (var u = j + 1; u < __IndexOfArr; u++) {
-                        AfterLogin_Status_Arr[j] = AfterLogin_Status_Arr[u];
-                    }
-                }
-                __IndexOfArr--;
+            function myFunction(value, index, array) {
+                return value.address == socket.check_connect_gamepad;
             }
-        }
-        for (var i = 0; i < __IndexOfArr; i++) {
-            console.log("User: " + User_Name_Arr[i] + "  ");
-        }
-
-        if (socket.Phong == "1") {
-            console.log("ngat ket noi gamepad 1")
-            check_game_pad_1 = true;
-        } else {
-            if (socket.Phong == "2") {
-                console.log("Ngat ket noi gamepad 2")
-                check_game_pad_2 = true;
-            }
+            Array_Gamepad.splice(numberOfElementInArray, 1)
+            io.sockets.emit('Sever_Gamepad_Status', Array_Gamepad);
         }
 
-        console.log()
+
     });
     /************************************************************************/
 
@@ -137,33 +99,32 @@ io.on("connection", function(socket) {
      ********select gamepad related socket*******
      ********************************************/
     socket.on("Client_Gamepad_Status", function() {
-        //console.log("Transfering Page!\r\n");
-        var status = {
-            "status1": check_game_pad_1,
-            "status2": check_game_pad_2
-        };
-        socket.emit("Server_Gamepad_Status", status);
-        console.log(JSON.stringify(status));
+
+        socket.emit("Server_Gamepad_Status", Array_Gamepad);
+        console.log(Array_Gamepad)
     });
 
     socket.on("Client_Select_Gamepad", function(data) {
-        if (data == 1)
-            check_game_pad_1 = true;
-        else if (data == 2)
-            check_game_pad_2 = true;
-		else if (data == 3){
-			data = 2
-			check_game_pad_2 = true
-		}
-        var status = {
-            "status1": check_game_pad_1,
-            "status2": check_game_pad_2
-        };
-        io.sockets.emit("Server_Gamepad_Status", status);
 
         console.log("Selected GamePad " + data);
-        socket.join(data);
-        check_room = data;
+        // phuong
+
+        var numberOfElementInArray = Array_Gamepad.findIndex(myFunction);
+
+        function myFunction(value, index, array) {
+            return value.address == data;
+        }
+
+        Array_Gamepad[numberOfElementInArray].status = false
+        io.sockets.emit('Server_Gamepad_Status', Array_Gamepad);
+
+        console.log(UserGlobal);
+        temp = UserGlobal.get(socket.username)
+        temp.gamepad = data
+        UserGlobal.set(socket.username, temp)
+
+
+
     });
     /************************************************************************/
 
@@ -172,61 +133,33 @@ io.on("connection", function(socket) {
     /**************************************
      ********Gamepad related socket*******
      **************************************/
-    socket.on("Gamepad_Connect", function() {
-        socket.player = false
+    socket.on("Gamepad_Connect", function(data) {
+        console.log("gamepad connect" + data)
+        //phuong
+        var temp = { "address": data, "status": true }
+        Array_Gamepad.push(temp) //mang nay se luu dang sach gamepad dang ket noi
+        socket.check_connect_gamepad = data
+        socket.join(data)
+        io.sockets.emit('Server_Gamepad_Status', Array_Gamepad);
+        console.log("arraygamepab connect ")
+        console.log(Array_Gamepad)
 
-        if (!(Gamepad1_Connected)) {
-            if (check_game_pad_1 == true) {
-                // true san sang ket noi
-                Gamepad1_Connected = true;
-                console.log("Gamepad 1 connected");
-                socket.Phong = "1";
-                check_game_pad_1 = false;
-                socket.join(socket.Phong);
-                socket.emit("Gamepad_Ok", socket.Phong);
-            } else {
-                if (check_game_pad_2 == true) {
-                    console.log("Gamepad 2 connected");
-                    socket.Phong = "2";
-                    check_game_pad_2 = false;
-                    socket.join(socket.Phong);
-                    socket.emit("Gamepad_Ok", socket.Phong);
-                }
-            }
-        } else {
-            console.log("Gamepad 2 connected");
-            socket.Phong = "2";
-            check_game_pad_2 = false;
-            socket.join(socket.Phong);
-            socket.emit("Gamepad_Ok", socket.Phong);
-            Gamepad1_Connected = false;
-        }
-        //console.log("gamepab connect" +socket.Phong);
-
-        var status = {
-            "status1": check_game_pad_1,
-            "status2": check_game_pad_2
-        };
-        console.log("Nguoi choi da ket noi: ", socket.Phong)
-        io.sockets.emit("Server_Gamepad_Status", status);
-        //console.log ("emit Server_Gamepad_status to everyone")
-        console.log(JSON.stringify(status));
     });
 
     socket.on("Gamepad_Command", function(data) {
-
+		var gamepad_room_name = socket.check_connect_gamepad
         if (data == 'right')
-            io.sockets.in(socket.Phong).emit("Server_Commands", 'd');
+            socket.to(gamepad_room_name).emit("Server_Commands", 'd');
         if (data == 'left')
-            io.sockets.in(socket.Phong).emit("Server_Commands", 'a');
+            socket.to(gamepad_room_name).emit("Server_Commands", 'a');
         if (data == 'down')
-            io.sockets.in(socket.Phong).emit("Server_Commands", 's');
+            socket.to(gamepad_room_name).emit("Server_Commands", 's');
         if (data == 'up')
-            io.sockets.in(socket.Phong).emit("Server_Commands", 'w');
+            socket.to(gamepad_room_name).emit("Server_Commands", 'w');
         if (data == 'ok')
-            io.sockets.in(socket.Phong).emit("Server_Commands", 'f');
+            socket.to(gamepad_room_name).emit("Server_Commands", 'f');
         if (data == 'cancle')
-            io.sockets.in(socket.Phong).emit("Server_Commands", 'g');
+            socket.to(gamepad_room_name).emit("Server_Commands", 'g');
 
         console.log("nut bam : " + data);
     });
@@ -238,82 +171,156 @@ io.on("connection", function(socket) {
      ********Gameplay related socket*******
      **************************************/
     socket.on("Client_PlaceShip_Done", function(data) {
-        check_ready++;
+        var room_name = UserGlobal.get(socket.username).room
+        io.sockets.adapter.rooms[room_name].check_ready += 1;
+        console.log("Placeship_ done: " + io.sockets.adapter.rooms[room_name].check_ready)
+        console.log(io.sockets.adapter.rooms[room_name].length)
+        var check_ready = io.sockets.adapter.rooms[room_name].check_ready;
         if (check_ready == 2) {
             var num = randomNumber()
             if (num) {
-                turn = 1;
-                io.sockets.in('1').emit("Server_SelectPlayTurn", true);
-                io.sockets.in('2').emit("Server_SelectPlayTurn", false);
+                //io.sockets.adapter.rooms[room_name].turn = 1;
+                socket.emit("Server_SelectPlayTurn", true);
+                socket.to(room_name).emit("Server_SelectPlayTurn", false);
             } else {
-                io.sockets.in('1').emit("Server_SelectPlayTurn", false);
-                io.sockets.in('2').emit("Server_SelectPlayTurn", true);
-                turn = 2;
+                socket.emit("Server_SelectPlayTurn", false);
+                socket.to(room_name).emit("Server_SelectPlayTurn", true);
+                //io.sockets.adapter.rooms[room_name].turn = 2;
             }
-            check_ready = 0;
+            io.sockets.adapter.rooms[room_name].check_ready = 0;
         }
     })
 
     socket.on("Client_Time_Out", function(data) {
-        check_timeout++;
-        console.log("Client Time out " + check_timeout)
-        if (check_timeout == 2) {
-            if (turn == 1)
-                turn = 2
-            else turn = 1
-            io.sockets.emit("Server_SwitchRole")
-            check_timeout = 0;
+        var room_name = UserGlobal.get(socket.username).room
+
+        io.sockets.adapter.rooms[room_name].check_timeout++
+        console.log("Client Time out " + io.sockets.adapter.rooms[room_name].check_timeout)
+        if (io.sockets.adapter.rooms[room_name].check_timeout == 2) {
+            // if (io.sockets.adapter.rooms[room_name].turn == 1)
+            //     io.sockets.adapter.rooms[room_name].turn = 2
+            // else io.sockets.adapter.rooms[room_name].turn = 1
+            io.in(room_name).emit("Server_SwitchRole")
+            io.sockets.adapter.rooms[room_name].check_timeout = 0;
         }
     })
 
     socket.on("Client_Shot", function(data) {
+        var room_name = UserGlobal.get(socket.username).room
+
         console.log("Client shot receive : " + data)
-        if (turn == 1) {
-            console.log("1 shot 2")
-            io.sockets.in('2').emit("Server_WereShot", data);
-        }
-        if (turn == 2) {
-            console.log("2 shot 1")
-            io.sockets.in('1').emit("Server_WereShot", data);
-        }
+        // if (io.sockets.adapter.rooms[room_name].turn == 1) {
+        //     console.log("1 shot 2")
+        //     io.sockets.in('2').emit("Server_WereShot", data);
+        // }
+        // if (io.sockets.adapter.rooms[room_name].turn == 2) {
+        //     console.log("2 shot 1")
+        //     io.sockets.in('1').emit("Server_WereShot", data);
+        // }
+        socket.to(room_name).emit("Server_WereShot", data)
     })
 
     socket.on("Client_Shot_Result", function(data) {
+        var room_name = UserGlobal.get(socket.username).room
+
         console.log("Client_Shot_Result : " + data)
-        if (turn == 1) {
-            io.sockets.in('1').emit("Server_Shot_Result", data);
-        } else {
-            if (turn == 2)
-                io.sockets.in('2').emit("Server_Shot_Result", data);
-        }
+        // if (turn == 1) {
+        //     io.sockets.in('1').emit("Server_Shot_Result", data);
+        // } else {
+        //     if (turn == 2)
+        //         io.sockets.in('2').emit("Server_Shot_Result", data);
+        // }
+        socket.to(room_name).emit("Server_Shot_Result", data)
         if (!data) {
-            if (turn == 1)
-                turn = 2
-            else turn = 1
-            io.sockets.emit("Server_SwitchRole")
-            check_timeout = 0;
+            // if (turn == 1)
+            //     turn = 2
+            // else turn = 1
+            //io.sockets.emit("Server_SwitchRole")
+            io.in(room_name).emit("Server_SwitchRole")
+            io.sockets.adapter.rooms[room_name].check_timeout = 0;
         }
     })
 
     socket.on("Client_Hit_Vibration", function(data) {
+        var gamepad = UserGlobal.get(socket.username).gamepad
+        var room_name = UserGlobal.get(socket.username).room
         switch (data) {
             case "Hit":
-                if (turn == 1) {
-                    io.sockets.in('1').emit("Server_SendVibra", data);
-                } else if (turn == 2) {
-                    io.sockets.in('2').emit("Server_SendVibra", data);
-                }
+                // if (turn == 1) {
+                //     io.sockets.in('1').emit("Server_SendVibra", data);
+                // } else if (turn == 2) {
+                //     io.sockets.in('2').emit("Server_SendVibra", data);
+                // }
+                io.in(gamepad).emit("Server_SendVibra", data)
                 break;
             case "EndGame":
-                if (turn == 1) {
-                    io.sockets.in('1').emit("Server_SendVibra", data);
-                } else if (turn == 2) {
-                    io.sockets.in('2').emit("Server_SendVibra", data);
-                }
+                // if (turn == 1) {
+                //     io.sockets.in('1').emit("Server_SendVibra", data);
+                // } else if (turn == 2) {
+                //     io.sockets.in('2').emit("Server_SendVibra", data);
+                // }
+                io.in(gamepad).emit("Server_SendVibra", data)
                 break;
         }
     })
     /*********************************************************/
+
+
+
+    /*********************************
+     ***********Room socket************
+     **********************************/
+    //phuong
+    socket.on("Client_Room_Status", function() {
+        socket.emit("Server_Room_Status", Array.from(Room2Users));
+        console.log(Room2Users)
+    })
+
+
+    socket.on("Client_Create_Room", function(data) {
+        Room2Users.set(data, {
+            "User": 0,
+            "UserName": [],
+        })
+        io.sockets.emit("Server_Room_Status", Array.from(Room2Users));
+        //socket.join(data)
+        // io.sockets.adapter.rooms[data].check_ready = 0
+        // io.sockets.adapter.rooms[data].check_timeout = 0
+        // io.sockets.adapter.rooms[data].turn = 0
+        console.log(Room2Users)
+    })
+
+    socket.on("Client_Delete_Room", function(data) {
+
+        Room2Users.delete(data)
+        io.sockets.emit("Server_Room_Status", Array.from(Room2Users));
+        console.log(Room2Users)
+    })
+
+
+    socket.on("Client_Join_Room", function(data) {
+
+        console.log("Client_Join_Room" + data)
+        console.log(socket.username)
+        temp = Room2Users.get(data)
+        console.log(temp)
+        temp.User = temp.User + 1
+
+        temp.UserName.push(socket.username) // cong chuoi vo
+        Room2Users.set(data, temp)
+        io.sockets.emit("Server_Room_Status", Array.from(Room2Users));
+
+        // ben chom room 2 nguoi choi
+
+        temp = UserGlobal.get(socket.username)
+        temp.room = data
+        UserGlobal.set(socket.username, temp)
+        console.log(Room2Users)
+        console.log(UserGlobal)
+
+    })
+    /*********************************************************/
+
 
 });
 
@@ -332,9 +339,21 @@ function HandlerIndexPage(socket, msg) {
     } else
         console.log(socket.username + " player at index")
 
-    socket.join(check_room);
     console.log("Connect GamePad: " + check_room);
     console.log(io.sockets.adapter.rooms);
+
+    temp = UserGlobal.get(socket.username)
+    socket.join(temp.gamepad)
+    socket.join(temp.room)
+
+    console.log (socket.userame + " joining room " + temp.room)
+    console.log ("room lenght " + io.sockets.adapter.rooms[temp.room].length)
+    // first player to enter the room
+    if (io.sockets.adapter.rooms[temp.room].length == 1) {
+        io.sockets.adapter.rooms[temp.room].check_ready = 0
+        io.sockets.adapter.rooms[temp.room].check_timeout = 0
+        io.sockets.adapter.rooms[temp.room].turn = 0
+    }
 }
 
 function HandlerSelectremotePage(socket, msg) {
@@ -351,7 +370,7 @@ function HandlerLoginPage(socket, msg) {
     if (socket.username != null) {
         var saveCookie = {
             "resUserName": socket.username,
-            "resSessionkey": UserSession.get(socket.username)
+            "resSessionkey": UserGlobal.get(socket.username)
         };
         socket.emit("Server_Login_Sucess", saveCookie);
         return
@@ -388,11 +407,16 @@ function LoginSuccess(username, pass, socket) {
         "resSessionkey": SessionKey
     };
     console.log("Cookie Created:  " + SessionKey);
-    UserSession.set(username, SessionKey)
+    //UserGlobal.set(username, SessionKey)
+    UserGlobal.set(username, {
+        "session": SessionKey,
+        "gamepad": null,
+        "room": null
+    })
 
     socket.emit("Server_Login_Sucess", saveCookie);
 
-    console.log(UserSession)
+    console.log(UserGlobal)
 }
 
 function LoginFail(username, socket) {
@@ -422,8 +446,8 @@ function RegisterFail(username, socket) {
  ********HTTP GET handler*******
  ******************************/
 function CheckSession(session) {
-    for (const v of UserSession.values()) {
-        if (v.localeCompare(session) == 0) {
+    for (const v of UserGlobal.values()) {
+        if (v.session.localeCompare(session) == 0) {
             console.log("change page")
             return true
         }
@@ -462,6 +486,17 @@ app.get("/selectRemote", function(req, res) {
 app.get("/register", function(req, res) {
     res.render("register");
 });
+
+app.get("/room", function(req, res) {
+    if (CheckSession(req.cookies.seasion)) {
+        res.render("room");
+    } else
+        res.redirect('/login')
+});
+
+app.get("/gamepad", function(req, res) {
+    res.render("gamepad");
+});
 /***********************************************/
 
 
@@ -485,8 +520,8 @@ function Create_New_table() {
 }
 
 function Login(username, pass, socket) {
-    console.log(UserSession.get(username))
-    if (UserSession.get(username) == undefined)
+    console.log(UserGlobal.get(username))
+    if (UserGlobal.get(username) == undefined)
         db.query("SELECT * FROM client WHERE Username=? AND Password=?", [username, pass], function(err, rows, fields) {
             if (err) throw err;
             if (rows.length == 0) {
@@ -516,19 +551,19 @@ function Register(username, pass, socket) {
 
 function LogOut(username) {
     console.log(username + " logout")
-    UserSession.delete(username)
-    console.log(UserSession)
+    UserGlobal.delete(username)
+    console.log(UserGlobal)
 }
 
 function CompairSession(session, socket) {
     socket.username = null
-    for (const [k, v] of UserSession.entries()) {
-        if (v.localeCompare(session) == 0) {
+    for (const [k, v] of UserGlobal.entries()) {
+        if (v.session.localeCompare(session) == 0) {
             socket.username = k
             break
         }
     }
-    console.log(UserSession)
+    console.log(UserGlobal)
 }
 
 function CreateSessionKey() {
