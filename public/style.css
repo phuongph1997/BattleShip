@@ -257,10 +257,6 @@ button {
   cursor: pointer;
 }
 
-.hidden {
-  display: none;
-}
-
 button#reset {
   position: absolute;
   right: 0;
@@ -291,19 +287,26 @@ div .selected {
 }
 
 .alert {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   position: fixed;
+  align-content: center;
   width: 100%;
   height: 100%;
   z-index: 4;
 }
 
 .title {
-  display: flex;
   flex-direction: column;
   justify-content: center;
   text-align: center;
   width: 100%;
-  height: 100%;
+  /*height: 100%;*/
   font-size: 60px;
   color: white;
+}
+
+.hidden {
+  display: none;
 }

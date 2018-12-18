@@ -28,10 +28,29 @@
     socket.on("Server_Login_Sucess",function(random_string){
         //alert("Login Success!");
         // cookie random string
-        document.cookie = 'username=' + random_string.resUserName + ';';
-        document.cookie = 'seasion=' + random_string.resSessionkey + ';';
+		var now = new Date();
+		var time = now.getTime();
+		//alert("Time Now: " + time);
+		var expireTime = time + 10*60*1000;
+		now.setTime(expireTime);
+		 now = createDateAsUTC(now);
+		//alert("Time: " + expireTime);
+		var value = now.toGMTString();
+		//document.cookie = "doSomethingOnlyOnce=true; expires=" + value;
+        document.cookie = "username= " + random_string.resUserName + "; expires =" + value ;
+        document.cookie = "seasion= " + random_string.resSessionkey + "; expires =" + value ;
+		//document.cookie = 'username=' + random_string.resUserName + ';' ;
+        //document.cookie = 'seasion=' + random_string.resSessionkey + ';';
+		//document.cookie = 'max-age=' + 60000 + ';';
+        //document.cookie = 'Expires='+ now.toUTCString() +';/'; // toGMTString was Deprecated
         window.location.href = './selectRemote';
     })
+	
+	function createDateAsUTC(date) 
+	{
+    return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours(), date.getMinutes(), date.getSeconds()));
+	}
+	
     $(document).ready(function(){
         //alert("ready alert!");
         

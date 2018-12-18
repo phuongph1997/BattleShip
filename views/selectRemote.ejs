@@ -29,7 +29,14 @@
     {
 		//alert("Status: " + data[0].status);
         console.log("Sever_Gamepad_Status receive");
+		console.log(data);
 		gamePad_ArrLength = data.length;
+		for(var i = 0; i < 9;i++)
+		{
+			$(gamePad_ID_Arr[i]).addClass('gamepad_noConnect');
+			$(gamePad_ID_Arr[i]+"_text").text("");
+		}
+		
 		for(var i = 0; i < gamePad_ArrLength;i++)
 		{
 			//gamePad_Status_Arr[i] = data[i];
@@ -45,6 +52,7 @@
 			{
 				$(gamePad_ID_Arr[i]).attr("disabled",true);
 				$(gamePad_ID_Arr[i]).attr("name",gamePad_Name_Arr[i]);
+				
 			}
 			
 		}

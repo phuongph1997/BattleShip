@@ -42,9 +42,10 @@ var turn;
 var UserGlobal = new Map()
 var Room2Users = new Map()
 var Array_Gamepad = []
-// socket.on("Get_All_Remote_Status", function(){
 
-// })
+//io.set('heartbeat timeout', 7000); 
+//io.set('heartbeat interval', 3000);
+
 io.on("connection", function(socket) {
     var req = socket.request;
     console.log("ID ket noi: " + socket.id);
@@ -54,13 +55,13 @@ io.on("connection", function(socket) {
      **************************************/
     socket.on("from", function(msg) {
         //console.log("Page type is: " + msg.type);
-	var temp = CheckSession(msg.cookie)
-    console.log("temp: " + temp)
-    if (temp != null)
-        if (msg.type != temp)
-		  socket.emit("Change_Page",temp)
+        var temp = CheckSession(msg.cookie)
+        console.log("temp: " + temp)
+        if (temp != null)
+            if (msg.type != temp)
+                socket.emit("Change_Page", temp)
 
-	
+
         console.log("cookie: " + msg.cookie)
         socket.player = true
         CompairSession(msg.cookie, socket)
@@ -85,15 +86,18 @@ io.on("connection", function(socket) {
 
     socket.on("disconnect", function() {
         //phuong
+        console.log("disconnect")
         if (socket.check_connect_gamepad != null) {
             var numberOfElementInArray = Array_Gamepad.findIndex(myFunction);
-
+		
             function myFunction(value, index, array) {
                 return value.address == socket.check_connect_gamepad;
             }
             Array_Gamepad.splice(numberOfElementInArray, 1)
-            io.sockets.emit('Sever_Gamepad_Status', Array_Gamepad);
-			
+            io.sockets.emit('Server_Gamepad_Status', Array_Gamepad);
+			console.log(Array_Gamepad)
+			console.log(" dis game pab disconnect")
+
         }
 
 
@@ -112,70 +116,89 @@ io.on("connection", function(socket) {
     });
 
     socket.on("Client_Select_Gamepad", function(data) {
-		temp = UserGlobal.get(socket.username)
-		if(temp.page == "selectRemote")
-		{
-        console.log("Selected GamePad " + data);
-        // phuong
+        temp = UserGlobal.get(socket.username)
+        if (temp.page == "selectRemote") {
+            console.log("Selected GamePad " + data);
+            // phuong
 
-        var numberOfElementInArray = Array_Gamepad.findIndex(myFunction);
-		
-        function myFunction(value, index, array) {
-            return value.address == data;
+            var numberOfElementInArray = Array_Gamepad.findIndex(myFunction);
+
+            function myFunction(value, index, array) {
+                return value.address == data;
+            }
+
+            //Array_Gamepad[numberOfElementInArray].status = false
+            if (Array_Gamepad[numberOfElementInArray].status == true) {
+                Array_Gamepad[numberOfElementInArray].status = false
+                io.sockets.emit('Server_Gamepad_Status', Array_Gamepad);
+
+                console.log(UserGlobal);
+                temp = UserGlobal.get(socket.username)
+                temp.gamepad = data
+                temp.page = "room"
+                UserGlobal.set(socket.username, temp)
+
+                socket.emit("Change_Page", "./room")
+
+            } else {
+                socket.emit("Change_Page", "./selectRemote")
+            }
+
         }
 
-        //Array_Gamepad[numberOfElementInArray].status = false
-		if(Array_Gamepad[numberOfElementInArray].status == true)
-		{
-			Array_Gamepad[numberOfElementInArray].status = false
-			io.sockets.emit('Server_Gamepad_Status', Array_Gamepad);
-
-        console.log(UserGlobal);
-        temp = UserGlobal.get(socket.username)
-        temp.gamepad = data
-		temp.page= "room"
-        UserGlobal.set(socket.username, temp)
-		
-		socket.emit("Change_Page","./room")
-			
-		}	
-		else {
-			socket.emit("Change_Page","./selectRemote")
-		}
-
-		}
-
     });
-	
-	
+
+    socket.on("Change_Gamepad", function() {
+        console.log("Change_Gamepad trigger")
+        temp = UserGlobal.get(socket.username)
+        gamepad_name = temp.gamepad
+
+        var numberOfElementInArray = Array_Gamepad.findIndex(myFunction);
+
+        function myFunction(value, index, array) {
+            return value.address == gamepad_name;
+        }
+        Array_Gamepad[numberOfElementInArray].status = true
+        io.sockets.emit('Server_Gamepad_Status', Array_Gamepad);
+
+        temp2 = UserGlobal.get(socket.username)
+        temp2.page = "selectRemote"
+        UserGlobal.set(socket.username, temp2)
+        socket.emit("Change_Page", "./selectRemote")
+    })
+
     /************************************************************************/
 
-	socket.on("Change_Gamepad",function(){
-		socket.emit("Change_Page","./selectRemote")
-	})
-	
-		
-		
-	
+    
 
     /**************************************
      ********Gamepad related socket*******
      **************************************/
     socket.on("Gamepad_Connect", function(data) {
+		
         console.log("Gamepad connect from ESP " + data)
         //phuong
-        var temp = { "address": data, "status": true }
-        Array_Gamepad.push(temp) //mang nay se luu dang sach gamepad dang ket noi
+        
         socket.check_connect_gamepad = data
         socket.join(data)
-        io.sockets.emit('Server_Gamepad_Status', Array_Gamepad);
-        console.log("arraygamepab connect ")
-        console.log(Array_Gamepad)
+		var length = io.sockets.adapter.rooms[data].length
+		if(  length != 2 )
+		{
+			var temp = { "address": data, "status": true }
+			Array_Gamepad.push(temp) //mang nay se luu dang sach gamepad dang ket noi
+		}
+		else
+		{
+			var temp = { "address": data, "status": false }
+			Array_Gamepad.push(temp) //mang nay se luu dang sach gamepad dang ket noi
+		}
+		io.sockets.emit('Server_Gamepad_Status', Array_Gamepad);
+		
 
     });
 
     socket.on("Gamepad_Command", function(data) {
-		var gamepad_room_name = socket.check_connect_gamepad
+        var gamepad_room_name = socket.check_connect_gamepad
         if (data == 'right')
             socket.to(gamepad_room_name).emit("Server_Commands", 'd');
         if (data == 'left')
@@ -273,23 +296,23 @@ io.on("connection", function(socket) {
         var gamepad = UserGlobal.get(socket.username).gamepad
         var room_name = UserGlobal.get(socket.username).room
         //switch (data) {
-            //case "Hit":
-                // if (turn == 1) {
-                //     io.sockets.in('1').emit("Server_SendVibra", data);
-                // } else if (turn == 2) {
-                //     io.sockets.in('2').emit("Server_SendVibra", data);
-                // }
-				console.log("ban trung ")
-                socket.to(gamepad).emit("Server_SendVibra", data)
-               // break;
-            //case "EndGame":
-                // if (turn == 1) {
-                //     io.sockets.in('1').emit("Server_SendVibra", data);
-                // } else if (turn == 2) {
-                //     io.sockets.in('2').emit("Server_SendVibra", data);
-                // }
-				//socket.to(gamepad).emit("Server_SendVibra", data)
-               // break;
+        //case "Hit":
+        // if (turn == 1) {
+        //     io.sockets.in('1').emit("Server_SendVibra", data);
+        // } else if (turn == 2) {
+        //     io.sockets.in('2').emit("Server_SendVibra", data);
+        // }
+        console.log("ban trung ")
+        socket.to(gamepad).emit("Server_SendVibra", data)
+        // break;
+        //case "EndGame":
+        // if (turn == 1) {
+        //     io.sockets.in('1').emit("Server_SendVibra", data);
+        // } else if (turn == 2) {
+        //     io.sockets.in('2').emit("Server_SendVibra", data);
+        // }
+        //socket.to(gamepad).emit("Server_SendVibra", data)
+        // break;
         //}
     })
     /*********************************************************/
@@ -303,6 +326,25 @@ io.on("connection", function(socket) {
     socket.on("Client_Room_Status", function() {
         socket.emit("Server_Room_Status", Array.from(Room2Users));
         console.log(Room2Users)
+
+
+
+        db.query("SELECT TotalWin, TotalLose , TotalHit , TotalShot FROM client WHERE Username=? ", [socket.username], function(err, rows, fields) {
+            if (err) throw err;
+            var win = 0
+            var lose = 0
+            var hit = 0
+            var shot = 0
+            hit = rows[0].TotalHit
+            shot = rows[0].TotalShot
+            win = rows[0].TotalWin
+            lose = rows[0].TotalLose
+
+            socket.emit("User_History", { "win": win, "lose": lose, "shot": shot, "hit": hit })
+        })
+
+
+
     })
 
 
@@ -310,6 +352,7 @@ io.on("connection", function(socket) {
         Room2Users.set(data, {
             "User": 0,
             "UserName": [],
+            "Status": true
         })
         io.sockets.emit("Server_Room_Status", Array.from(Room2Users));
         //socket.join(data)
@@ -328,50 +371,175 @@ io.on("connection", function(socket) {
 
 
     socket.on("Client_Join_Room", function(data) {
-		temp = UserGlobal.get(socket.username)
-		if(temp.page == "room")
-		{	
-        console.log("Client_Join_Room" + data)
-        console.log(socket.username)
-        temp = Room2Users.get(data)
-        console.log(temp)
-        temp.User = temp.User + 1
+        temp = UserGlobal.get(socket.username)
+        if (temp.page == "room") {
+            console.log("Client_Join_Room" + data)
+            console.log(socket.username)
+            temp2 = Room2Users.get(data)
+            console.log(temp2)
+            if (temp2.Status == true) {
 
-        temp.UserName.push(socket.username) // cong chuoi vo
-        Room2Users.set(data, temp)
+                temp2.User = temp2.User + 1
+                if (temp2.User == 2)
+                    temp2.Status = false
+
+                temp2.UserName.push(socket.username) // cong chuoi vo
+                Room2Users.set(data, temp2)
+                io.sockets.emit("Server_Room_Status", Array.from(Room2Users));
+
+                // ben chom room 2 nguoi choi
+
+
+                temp.room = data
+                temp.page = "index"
+                UserGlobal.set(socket.username, temp)
+
+                console.log(Room2Users)
+                console.log(UserGlobal)
+            }
+        }
+        var page = "/" + temp.page
+        socket.emit("Change_Page", page)
+		
+
+    })
+
+    socket.on("Logout", function() {
+
+
+        temp = UserGlobal.get(socket.username)
+        gamepad_name = temp.gamepad
+
+        var numberOfElementInArray = Array_Gamepad.findIndex(myFunction);
+
+        function myFunction(value, index, array) {
+            return value.address == gamepad_name;
+        }
+        Array_Gamepad[numberOfElementInArray].status = true
+        UserGlobal.delete(socket.username)
+        io.sockets.emit('Server_Gamepad_Status', Array_Gamepad);
+        socket.emit("Change_Page", "./selectRemote")
+    })
+
+    socket.on("Match_Result", function(data) {
+        temp = UserGlobal.get(socket.username)
+
+        temp2 = Room2Users.get(temp.room)
+
+        temp2.User = temp2.User - 1
+        if (temp2.User == 0)
+            temp2.Status = true
+
+        //temp2.UserName.pop() // cong chuoi vo
+        var indexUser = temp2.UserName.indexOf(socket.username);
+
+        temp2.UserName.splice(indexUser, 1);
+
+
+        Room2Users.set(temp.room, temp2)
+
+
         io.sockets.emit("Server_Room_Status", Array.from(Room2Users));
 
         // ben chom room 2 nguoi choi
 
-        temp = UserGlobal.get(socket.username)
-        temp.room = data
-		temp.page = "index"
+
+        temp.room = null
+        temp.page = "room"
+		temp.ingame = false
         UserGlobal.set(socket.username, temp)
-		
-        console.log(Room2Users)
-        console.log(UserGlobal)
-		}
-		socket.emit("Change_Page","./index")
-		
+        
+        console.log("da chay vo Match_Result")
+        console.log(data)
+        db.query("SELECT TotalWin, TotalLose , TotalHit , TotalShot FROM client WHERE Username=? ", [socket.username], function(err, rows, fields) {
 
+            if (err) throw err;
+            var win = 0
+            var lose = 0
+            var hit = 0
+            var shot = 0
+            console.log(rows)
+            hit = rows[0].TotalHit + data.hit
+            shot = rows[0].TotalShot + data.shot
+            if (data.result == true) {
+                win = rows[0].TotalWin + 1
+                lose = rows[0].TotalLose
+            } else {
+                lose = rows[0].TotalLose + 1
+                win = rows[0].TotalWin
+            }
+            db.query("UPDATE client SET  TotalWin = ?, TotalLose = ? , TotalHit = ? , TotalShot = ?  WHERE Username=? ", [win, lose, hit, shot, socket.username], function(err, rows, fields) {
+                if (err) throw err;
+
+            })
+        })
+
+        socket.emit("Change_Page", "./room")
     })
+
 	
-	socket.on("Logout", function()
-    {
+	socket.on("Give_Up_Match",function(data){
+		
+		
+		db.query("SELECT TotalWin, TotalLose , TotalHit , TotalShot FROM client WHERE Username=? ", [socket.username], function(err, rows, fields) {
+
+            if (err) throw err;
+            var win = 0
+            var lose = 0
+            var hit = 0
+            var shot = 0
+            console.log(rows)
+            hit = rows[0].TotalHit + data.hit
+            shot = rows[0].TotalShot + data.shot
+            if (data.result == true) {
+                win = rows[0].TotalWin + 1
+                lose = rows[0].TotalLose
+            } else {
+                lose = rows[0].TotalLose + 1
+                win = rows[0].TotalWin
+            }
+            db.query("UPDATE client SET  TotalWin = ?, TotalLose = ? , TotalHit = ? , TotalShot = ?  WHERE Username=? ", [win, lose, hit, shot, socket.username], function(err, rows, fields) {
+                if (err) throw err;
+
+            })
+        })
 
 
-      temp = UserGlobal.get(socket.username)
-      gamepad_name= temp.gamepad
+        temp = UserGlobal.get(socket.username)
 
-      var numberOfElementInArray = Array_Gamepad.findIndex(myFunction);
-      function myFunction(value, index, array) {
-          return value.address == gamepad_name;
-      }
-      Array_Gamepad[numberOfElementInArray].status = true
-      UserGlobal.delete(socket.username)
-      io.sockets.emit('Server_Gamepad_Status', Array_Gamepad);
+        temp2 = Room2Users.get(temp.room)
 
-    })
+        temp2.User = temp2.User - 1
+        if (temp2.User == 0)
+            temp2.Status = true
+
+        //temp2.UserName.pop() // cong chuoi vo
+        var indexUser = temp2.UserName.indexOf(socket.username);
+
+        temp2.UserName.splice(indexUser, 1);
+
+
+        Room2Users.set(temp.room, temp2)
+
+
+        io.sockets.emit("Server_Room_Status", Array.from(Room2Users));
+
+        // ben chom room 2 nguoi choi
+		socket.to(temp.room).emit('Server_Send_Give_Up_Match',socket.username);
+
+        temp.room = null
+        temp.page = "room"
+		temp.ingame = false
+        UserGlobal.set(socket.username, temp)
+
+		
+        //socket.emit("Change_Page", "./room")
+		
+		
+		
+	})
+	
+
     /*********************************************************/
 
 
@@ -392,21 +560,30 @@ function HandlerIndexPage(socket, msg) {
     } else
         console.log(socket.username + " player at index")
 
-    console.log("Connect GamePad: " + check_room);
-    console.log(io.sockets.adapter.rooms);
+    //console.log("Connect GamePad: " + check_room);
+    //console.log(io.sockets.adapter.rooms);
 
     temp = UserGlobal.get(socket.username)
-    socket.join(temp.gamepad)
-    socket.join(temp.room)
-
-    console.log (socket.username + " joining room " + temp.room)
-    console.log ("room lenght " + io.sockets.adapter.rooms[temp.room].length)
-    // first player to enter the room
-    if (io.sockets.adapter.rooms[temp.room].length == 1) {
-        io.sockets.adapter.rooms[temp.room].check_ready = 0
-        io.sockets.adapter.rooms[temp.room].check_timeout = 0
-        io.sockets.adapter.rooms[temp.room].turn = 0
-    }
+	if(temp.ingame == false)
+	{
+		temp.ingame = true
+		UserGlobal.set(socket.username,temp)
+		socket.join(temp.gamepad)
+		socket.join(temp.room)
+		
+		console.log(socket.username + " joining room " + temp.room)
+		console.log("room lenght " + io.sockets.adapter.rooms[temp.room].length)
+		// first player to enter the room
+		if (io.sockets.adapter.rooms[temp.room].length == 1) {
+			io.sockets.adapter.rooms[temp.room].check_ready = 0
+			io.sockets.adapter.rooms[temp.room].check_timeout = 0
+			io.sockets.adapter.rooms[temp.room].turn = 0
+		}
+	}
+	else{
+		socket.emit("Error")
+	}
+	
 }
 
 function HandlerSelectremotePage(socket, msg) {
@@ -465,11 +642,12 @@ function LoginSuccess(username, pass, socket) {
         "session": SessionKey,
         "gamepad": null,
         "room": null,
-		"page": "selectRemote"
+        "page": "selectRemote",
+		"ingame": false
     })
-	
+
     socket.emit("Server_Login_Sucess", saveCookie);
-	socket.emit("Change_Page","./selectRemote")
+    socket.emit("Change_Page", "./selectRemote")
 
     console.log(UserGlobal)
 }
@@ -511,7 +689,7 @@ function CheckSession(session) {
 }
 
 app.get("/", function(req, res) {
-    var temp= CheckSession(req.cookies.seasion)
+    var temp = CheckSession(req.cookies.seasion)
     if (temp != null) {
         res.render(temp)
     } else
@@ -519,28 +697,28 @@ app.get("/", function(req, res) {
 });
 
 app.get("/login", function(req, res) {
-    var temp= CheckSession(req.cookies.seasion)
-    if (temp != null ) {
+    var temp = CheckSession(req.cookies.seasion)
+    if (temp != null) {
         res.redirect(temp)
     } else
         res.render("login");
 });
 
 app.get("/index", function(req, res) {
-    var temp= CheckSession(req.cookies.seasion)
-    if (temp == "index"){
-		res.render(temp)
-	} else if (temp != null) {
+    var temp = CheckSession(req.cookies.seasion)
+    if (temp == "index") {
+        res.render(temp)
+    } else if (temp != null) {
         res.redirect(temp)
     } else
         res.redirect("login");
 });
 
 app.get("/selectRemote", function(req, res) {
-    var temp= CheckSession(req.cookies.seasion)
-	if (temp == "selectRemote"){
-		res.render(temp)
-	} else if (temp != null) {
+    var temp = CheckSession(req.cookies.seasion)
+    if (temp == "selectRemote") {
+        res.render(temp)
+    } else if (temp != null) {
         res.redirect(temp)
     } else
         res.redirect("login");
@@ -551,12 +729,12 @@ app.get("/register", function(req, res) {
 });
 
 app.get("/room", function(req, res) {
-	
-    var temp= CheckSession(req.cookies.seasion)
-	
-    if (temp == "room"){
-		res.render(temp)
-	} else if (temp != null) {
+
+    var temp = CheckSession(req.cookies.seasion)
+
+    if (temp == "room") {
+        res.render(temp)
+    } else if (temp != null) {
         res.redirect(temp)
     } else
         res.redirect("login");
@@ -578,7 +756,8 @@ db.on('error', function(err) {
 });
 
 function Create_New_table() {
-    var sql = "CREATE TABLE IF NOT EXISTS client (Username VARCHAR(255), Password VARCHAR(255), GamePad INT )";
+    var sql = "CREATE TABLE IF NOT EXISTS client (Username VARCHAR(255), Password VARCHAR(255), TotalWin INT default 0 , TotalLose INT default 0, TotalHit INT default 0, TotalShot INT default 0)";
+
     db.query(sql, function(err, result) {
         if (err) throw err;
         //console.log(result)
